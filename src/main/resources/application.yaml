@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+app:
+  items-page:
+    row-size: 3
+
 spring:
   application:
     name: my-market-app

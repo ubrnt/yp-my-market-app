@@ -1,5 +1,6 @@
 package ru.yandex.practicum.mymarket.service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,13 +43,20 @@ public class CartService {
                 .sum();
     }
 
-    /**
-     * Returns itemId -> count for everything currently in the cart,
-     * so the storefront can show how many of each item is already added.
-     */
     @Transactional(readOnly = true)
-    public Map<Long, Integer> getCountByItemId() {
-        return cartItemRepository.findAll().stream()
+    public int getCount(Long itemId) {
+        return cartItemRepository.findByItemId(itemId)
+                .map(CartItem::getCount)
+                .orElse(0);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, Integer> getCountByItemIds(Collection<Long> itemIds) {
+        if (itemIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return cartItemRepository.findByItemIdIn(itemIds).stream()
                 .collect(Collectors.toMap(
                         cartItem -> cartItem.getItem().getId(),
                         CartItem::getCount));
