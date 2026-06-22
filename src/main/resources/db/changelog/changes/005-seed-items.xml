@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="005-seed-items" author="ubrnt">
+        <insert tableName="items">
+            <column name="title" value="Бейсболка чёрная"/>
+            <column name="description" value="Классическая бейсболка из хлопка с регулируемым размером."/>
+            <column name="price" valueNumeric="990"/>
+            <column name="image" valueBlobFile="db/data/images/black-cap.png"/>        </insert>
+        <insert tableName="items">
+            <column name="title" value="Бейсболка красная"/>
+            <column name="description" value="Яркая хлопковая бейсболка с регулируемым размером."/>
+            <column name="price" valueNumeric="990"/>
+            <column name="image" valueBlobFile="db/data/images/red-cap.png"/>        </insert>
+        <insert tableName="items">
+            <column name="title" value="Футбольный мяч"/>
+            <column name="description" value="Классический футбольный мяч, размер 5."/>
+            <column name="price" valueNumeric="1990"/>
+            <column name="image" valueBlobFile="db/data/images/soccer-ball.png"/>        </insert>
+        <insert tableName="items">
+            <column name="title" value="Зонт-трость чёрный"/>
+            <column name="description" value="Большой зонт-трость с автоматическим механизмом открытия."/>
+            <column name="price" valueNumeric="1490"/>
+            <column name="image" valueBlobFile="db/data/images/umbrella.png"/>        </insert>
+        <insert tableName="items">
+            <column name="title" value="Пивная кружка"/>
+            <column name="description" value="Гранёная стеклянная пивная кружка объёмом 0,5 литра."/>
+            <column name="price" valueNumeric="590"/>
+            <column name="image" valueBlobFile="db/data/images/beer-mug.png"/>        </insert>
+        <insert tableName="items">
+            <column name="title" value="Шотландский килт"/>
+            <column name="description" value="Традиционный шотландский килт из шерсти в красную клетку."/>
+            <column name="price" valueNumeric="6900"/>
+            <column name="image" valueBlobFile="db/data/images/kilt.png"/>        </insert>
+        <insert tableName="items">
+            <column name="title" value="Шотландская волынка"/>
+            <column name="description" value="Традиционная шотландская волынка с чехлом в красную клетку."/>
+            <column name="price" valueNumeric="24900"/>
+            <column name="image" valueBlobFile="db/data/images/bagpipes.png"/>        </insert>
+        <insert tableName="items">
+            <column name="title" value="Бейсболка Boston Bruins"/>
+            <column name="description" value="Кепка с логотипом хоккейного клуба Boston Bruins."/>
+            <column name="price" valueNumeric="2490"/>
+            <column name="image" valueBlobFile="db/data/images/bruins-cap.png"/>        </insert>
+    </changeSet>
+</databaseChangeLog>
