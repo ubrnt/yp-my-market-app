@@ -7,6 +7,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static ru.yandex.practicum.mymarket.util.TestDataFactory.cartItem;
+import static ru.yandex.practicum.mymarket.util.TestDataFactory.item;
 
 import java.util.List;
 import java.util.Map;
@@ -185,17 +187,4 @@ class CartServiceUnitTest {
         assertEquals(0L, service.getTotal());
     }
 
-    private Item item(long id, long price) {
-        Item item = new Item();
-        item.setId(id);
-        item.setPrice(price);
-        return item;
-    }
-
-    private CartItem cartItem(Item item, int count) {
-        CartItem cartItem = new CartItem();
-        cartItem.setItem(item);
-        cartItem.setCount(count);
-        return cartItem;
-    }
 }

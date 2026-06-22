@@ -11,6 +11,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static ru.yandex.practicum.mymarket.util.TestDataFactory.item;
+import static ru.yandex.practicum.mymarket.util.TestDataFactory.items;
 
 import java.util.List;
 import java.util.Map;
@@ -190,15 +192,4 @@ class ItemServiceUnitTest {
                 .count();
     }
 
-    private List<Item> items(long... ids) {
-        return java.util.Arrays.stream(ids).mapToObj(this::item).toList();
-    }
-
-    private Item item(long id) {
-        Item item = new Item();
-        item.setId(id);
-        item.setTitle("item-" + id);
-        item.setPrice(100L * id);
-        return item;
-    }
 }
