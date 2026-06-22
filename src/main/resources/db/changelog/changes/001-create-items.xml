@@ -17,7 +17,7 @@
             <column name="price" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="image" type="BLOB"/>
+            <column name="image" type="BYTEA"/>
         </createTable>
     </changeSet>
 </databaseChangeLog>
