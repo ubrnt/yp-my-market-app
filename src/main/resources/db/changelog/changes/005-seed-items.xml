@@ -10,41 +10,115 @@
             <column name="title" value="Бейсболка чёрная"/>
             <column name="description" value="Классическая бейсболка из хлопка с регулируемым размером."/>
             <column name="price" valueNumeric="990"/>
-            <column name="image" valueBlobFile="../../data/images/black-cap.png"/>        </insert>
+            <column name="image" valueBlobFile="../../data/images/black-cap.png"/>
+        </insert>
         <insert tableName="items">
             <column name="title" value="Бейсболка красная"/>
             <column name="description" value="Яркая хлопковая бейсболка с регулируемым размером."/>
             <column name="price" valueNumeric="990"/>
-            <column name="image" valueBlobFile="../../data/images/red-cap.png"/>        </insert>
+            <column name="image" valueBlobFile="../../data/images/red-cap.png"/>
+        </insert>
         <insert tableName="items">
             <column name="title" value="Футбольный мяч"/>
             <column name="description" value="Классический футбольный мяч, размер 5."/>
             <column name="price" valueNumeric="1990"/>
-            <column name="image" valueBlobFile="../../data/images/soccer-ball.png"/>        </insert>
+            <column name="image" valueBlobFile="../../data/images/soccer-ball.png"/>
+        </insert>
         <insert tableName="items">
             <column name="title" value="Зонт-трость чёрный"/>
             <column name="description" value="Большой зонт-трость с автоматическим механизмом открытия."/>
             <column name="price" valueNumeric="1490"/>
-            <column name="image" valueBlobFile="../../data/images/umbrella.png"/>        </insert>
+            <column name="image" valueBlobFile="../../data/images/umbrella.png"/>
+        </insert>
         <insert tableName="items">
             <column name="title" value="Пивная кружка"/>
             <column name="description" value="Гранёная стеклянная пивная кружка объёмом 0,5 литра."/>
             <column name="price" valueNumeric="590"/>
-            <column name="image" valueBlobFile="../../data/images/beer-mug.png"/>        </insert>
+            <column name="image" valueBlobFile="../../data/images/beer-mug.png"/>
+        </insert>
         <insert tableName="items">
             <column name="title" value="Шотландский килт"/>
             <column name="description" value="Традиционный шотландский килт из шерсти в красную клетку."/>
             <column name="price" valueNumeric="6900"/>
-            <column name="image" valueBlobFile="../../data/images/kilt.png"/>        </insert>
+            <column name="image" valueBlobFile="../../data/images/kilt.png"/>
+        </insert>
         <insert tableName="items">
             <column name="title" value="Шотландская волынка"/>
             <column name="description" value="Традиционная шотландская волынка с чехлом в красную клетку."/>
             <column name="price" valueNumeric="24900"/>
-            <column name="image" valueBlobFile="../../data/images/bagpipes.png"/>        </insert>
+            <column name="image" valueBlobFile="../../data/images/bagpipes.png"/>
+        </insert>
         <insert tableName="items">
             <column name="title" value="Бейсболка Boston Bruins"/>
             <column name="description" value="Кепка с логотипом хоккейного клуба Boston Bruins."/>
             <column name="price" valueNumeric="2490"/>
-            <column name="image" valueBlobFile="../../data/images/bruins-cap.png"/>        </insert>
+            <column name="image" valueBlobFile="../../data/images/bruins-cap.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Волейбольный мяч Mikasa V200W"/>
+            <column name="description" value="Волейбольный мяч"/>
+            <column name="price" valueNumeric="5990"/>
+            <column name="image" valueBlobFile="../../data/images/volleyball.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Волейбольный мяч Demix V700"/>
+            <column name="description" value="Волейбольный мяч"/>
+            <column name="price" valueNumeric="2490"/>
+            <column name="image" valueBlobFile="../../data/images/volleyball-demix.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Мяч для американского футбола Wilson"/>
+            <column name="description" value="Мяч для американского футбола"/>
+            <column name="price" valueNumeric="3490"/>
+            <column name="image" valueBlobFile="../../data/images/football-american.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Мяч для регби Gilbert Virtuo"/>
+            <column name="description" value="Мяч для регби"/>
+            <column name="price" valueNumeric="4290"/>
+            <column name="image" valueBlobFile="../../data/images/rugby-ball.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Теннисные мячи FILA Ultimate"/>
+            <column name="description" value="Теннисные мячи"/>
+            <column name="price" valueNumeric="590"/>
+            <column name="image" valueBlobFile="../../data/images/tennis-ball-fila.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Теннисные мячи HEAD T.I.P"/>
+            <column name="description" value="Теннисные мячи, набор"/>
+            <column name="price" valueNumeric="790"/>
+            <column name="image" valueBlobFile="../../data/images/tennis-balls-head.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Массажный мяч"/>
+            <column name="description" value="Массажный мяч"/>
+            <column name="price" valueNumeric="890"/>
+            <column name="image" valueBlobFile="../../data/images/massage-ball.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Ракетка для настольного тенниса 729"/>
+            <column name="description" value="Ракетка для настольного тенниса"/>
+            <column name="price" valueNumeric="1490"/>
+            <column name="image" valueBlobFile="../../data/images/table-tennis-racket.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Теннисная ракетка Torneo Pulse ALU"/>
+            <column name="description" value="Теннисная ракетка"/>
+            <column name="price" valueNumeric="2990"/>
+            <column name="image" valueBlobFile="../../data/images/tennis-racket-torneo.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Ракетка для падела Legend"/>
+            <column name="description" value="Ракетка для падела"/>
+            <column name="price" valueNumeric="3990"/>
+            <column name="image" valueBlobFile="../../data/images/padel-racket.png"/>
+        </insert>
+        <insert tableName="items">
+            <column name="title" value="Теннисная ракетка HEAD"/>
+            <column name="description" value="Теннисная ракетка"/>
+            <column name="price" valueNumeric="4490"/>
+            <column name="image" valueBlobFile="../../data/images/tennis-racket-head.png"/>
+        </insert>
     </changeSet>
 </databaseChangeLog>
