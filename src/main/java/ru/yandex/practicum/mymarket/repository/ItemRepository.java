@@ -14,6 +14,6 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
             + "or lower(i.description) like lower(concat('%', :search, '%'))")
     Page<Item> search(@Param("search") String search, Pageable pageable);
 
-    @Query(value = "select image from items where id = ?1", nativeQuery = true)
-    byte[] findImageById(Long id);
+    @Query(value = "select image from items where id = :id", nativeQuery = true)
+    byte[] findImageById(@Param("id") Long id);
 }
