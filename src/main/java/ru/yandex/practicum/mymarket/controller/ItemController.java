@@ -18,7 +18,7 @@ public class ItemController {
 
     private static final String DEFAULT_SORT = "NO";
     private static final String DEFAULT_PAGE_NUMBER = "1";
-    private static final String DEFAULT_PAGE_SIZE = "6";
+    private static final String DEFAULT_PAGE_SIZE = "5";
 
     private final ItemService itemService;
     private final CartService cartService;
