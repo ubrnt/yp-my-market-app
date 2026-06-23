@@ -104,6 +104,6 @@ class ItemControllerTest {
         mockMvc.perform(get("/items").param("sort", "PRICE"))
                 .andExpect(status().isOk());
 
-        verify(itemService).getItems(eq(""), eq(SortType.PRICE), eq(1), eq(5));
+        verify(itemService).getItems(eq(""), eq(SortType.PRICE), eq(1), eq(6));
     }
 }
