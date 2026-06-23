@@ -28,7 +28,6 @@ public class OrderController {
     public String order(@PathVariable Long id,
                         @RequestParam(defaultValue = "false") boolean newOrder,
                         Model model) {
-
         model.addAttribute("order", orderService.getOrder(id));
         model.addAttribute("newOrder", newOrder);
 

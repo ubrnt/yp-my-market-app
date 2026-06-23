@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.yandex.practicum.mymarket.domain.Order;
 import ru.yandex.practicum.mymarket.dto.OrderDto;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.OrderMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
 import ru.yandex.practicum.mymarket.repository.OrderRepository;
@@ -93,7 +94,7 @@ class OrderServiceUnitTest {
     @Test
     void getOrder_whenNotFound_throws() {
         when(orderRepository.findById(9L)).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> service.getOrder(9L));
+        assertThrows(NotFoundException.class, () -> service.getOrder(9L));
     }
 
 }

@@ -30,6 +30,7 @@ import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.SortType;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.ItemRepository;
 
@@ -174,7 +175,7 @@ class ItemServiceUnitTest {
     @Test
     void getItem_whenNotFound_throws() {
         when(itemRepository.findById(99L)).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> service.getItem(99L));
+        assertThrows(NotFoundException.class, () -> service.getItem(99L));
     }
 
     @Test

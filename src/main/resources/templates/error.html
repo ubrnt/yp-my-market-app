@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ошибка</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container p-5 text-center">
+    <h1 th:text="${status} ?: 'Ошибка'">Ошибка</h1>
+    <p class="fs-5" th:switch="${resource}">
+        <span th:case="'ITEM'">Товар не найден</span>
+        <span th:case="'ORDER'">Заказ не найден</span>
+        <span th:case="*">Страница не найдена</span>
+    </p>
+    <a href="/items" class="btn btn-secondary">На главную</a>
+</div>
+</body>
+</html>

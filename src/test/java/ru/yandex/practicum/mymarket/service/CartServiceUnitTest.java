@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.yandex.practicum.mymarket.domain.CartItem;
 import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.dto.Action;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
 import ru.yandex.practicum.mymarket.repository.ItemRepository;
@@ -116,7 +117,7 @@ class CartServiceUnitTest {
         when(cartItemRepository.findByItemId(1L)).thenReturn(Optional.empty());
         when(itemRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.changeCount(1L, Action.PLUS));
+        assertThrows(NotFoundException.class, () -> service.changeCount(1L, Action.PLUS));
     }
 
     @Test

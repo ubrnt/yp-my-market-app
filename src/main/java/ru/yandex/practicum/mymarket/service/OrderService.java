@@ -7,6 +7,7 @@ import ru.yandex.practicum.mymarket.domain.CartItem;
 import ru.yandex.practicum.mymarket.domain.Order;
 import ru.yandex.practicum.mymarket.domain.OrderItem;
 import ru.yandex.practicum.mymarket.dto.OrderDto;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.OrderMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
 import ru.yandex.practicum.mymarket.repository.OrderRepository;
@@ -29,6 +30,7 @@ public class OrderService {
     @Transactional
     public Long buy() {
         List<CartItem> cartItems = cartItemRepository.findAll();
+
         if (cartItems.isEmpty()) {
             throw new IllegalStateException("Cart is empty");
         }
@@ -46,6 +48,7 @@ public class OrderService {
 
         Long orderId = orderRepository.save(order).getId();
         cartItemRepository.deleteAll();
+
         return orderId;
     }
 
@@ -59,7 +62,8 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderDto getOrder(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + id));
+                .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ORDER, id));
+
         return orderMapper.toDto(order);
     }
 }

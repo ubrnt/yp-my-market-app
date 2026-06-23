@@ -23,6 +23,7 @@ import ru.yandex.practicum.mymarket.dto.ItemDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto.PagingDto;
 import ru.yandex.practicum.mymarket.dto.SortType;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.service.CartService;
 import ru.yandex.practicum.mymarket.service.ItemService;
 
@@ -68,6 +69,14 @@ class ItemControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("item"))
                 .andExpect(model().attributeExists("item"));
+    }
+
+    @Test
+    void item_whenNotFound_returns404() throws Exception {
+        when(itemService.getItem(999L)).thenThrow(new NotFoundException(NotFoundException.Resource.ITEM, 999L));
+
+        mockMvc.perform(get("/items/999"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

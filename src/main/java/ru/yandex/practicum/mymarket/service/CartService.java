@@ -10,6 +10,7 @@ import ru.yandex.practicum.mymarket.domain.CartItem;
 import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.dto.Action;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
 import ru.yandex.practicum.mymarket.repository.ItemRepository;
@@ -79,7 +80,7 @@ public class CartService {
     private void plus(Long itemId, CartItem cartItem) {
         if (cartItem == null) {
             Item item = itemRepository.findById(itemId)
-                    .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
+                    .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ITEM, itemId));
             CartItem created = new CartItem();
             created.setItem(item);
             created.setCount(1);

@@ -15,6 +15,7 @@ import ru.yandex.practicum.mymarket.dto.ItemDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto.PagingDto;
 import ru.yandex.practicum.mymarket.dto.SortType;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.ItemRepository;
 
@@ -51,13 +52,14 @@ public class ItemService {
                 .toList();
 
         PagingDto paging = new PagingDto(pageSize, pageNumber, page.hasPrevious(), page.hasNext());
+
         return new ItemsPageDto(toRows(items), paging);
     }
 
     @Transactional(readOnly = true)
     public ItemDto getItem(Long id) {
         Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + id));
+                .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ITEM, id));
         
         return itemMapper.toDto(item, cartService.getCount(id));
     }
@@ -77,6 +79,7 @@ public class ItemService {
 
     private List<List<ItemDto>> toRows(List<ItemDto> items) {
         List<List<ItemDto>> rows = new ArrayList<>();
+
         for (int from = 0; from < items.size(); from += rowSize) {
             int to = Math.min(from + rowSize, items.size());
             List<ItemDto> row = new ArrayList<>(items.subList(from, to));
@@ -85,6 +88,7 @@ public class ItemService {
             }
             rows.add(row);
         }
+
         return rows;
     }
 }

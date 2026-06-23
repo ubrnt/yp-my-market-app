@@ -22,13 +22,16 @@ public class CartController {
     @GetMapping
     public String cart(Model model) {
         fillModel(model);
+
         return "cart";
     }
 
     @PostMapping
     public String changeCount(@RequestParam Long id, @RequestParam Action action, Model model) {
         cartService.changeCount(id, action);
+
         fillModel(model);
+
         return "cart";
     }
 

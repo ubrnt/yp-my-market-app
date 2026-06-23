@@ -17,6 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.mymarket.dto.OrderDto;
 import ru.yandex.practicum.mymarket.dto.OrderItemDto;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.service.OrderService;
 
 @WebMvcTest(OrderController.class)
@@ -67,6 +68,14 @@ class OrderControllerTest {
                 .andExpect(redirectedUrl("/orders/42?newOrder=true"));
 
         verify(orderService).buy();
+    }
+
+    @Test
+    void order_whenNotFound_returns404() throws Exception {
+        when(orderService.getOrder(999L)).thenThrow(new NotFoundException(NotFoundException.Resource.ORDER, 999L));
+
+        mockMvc.perform(get("/orders/999"))
+                .andExpect(status().isNotFound());
     }
 
     private OrderDto order() {
