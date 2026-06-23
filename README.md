@@ -45,26 +45,11 @@ docker logs -f my-market-app
 docker stop my-market-app
 ```
 
-## Tests
-
-```bash
-./mvnw test
-```
-
-### Unit (Mockito, no Spring context)
-- Services: `CartServiceUnitTest`, `ItemServiceUnitTest`, `OrderServiceUnitTest`
-- Mappers: `ItemMapperTest`, `OrderMapperTest`
-
-### Integration
-- End-to-end web flow: `ShopFlowIntegrationTest`
-- Controllers: `ItemControllerTest`, `CartControllerTest`, `OrderControllerTest`, `ImageControllerTest`
-- Services: `CartServiceIntegrationTest`, `ItemServiceIntegrationTest`, `OrderServiceIntegrationTest`
-
 ## API
 
 | Method | URL | Description                   |
 |--------|-----|-------------------------------|
-| GET | `/`, `/items?search=&sort=NO&pageNumber=1&pageSize=6` | get items (search, sort, pagination) |
+| GET | `/`, `/items?search=&sort=NO&pageNumber=1&pageSize=5` | get items (search, sort, pagination) |
 | POST | `/items` | Change item quantity in cart  |
 | GET | `/items/{id}` | Item page                     |
 | POST | `/items/{id}` | Change item quantity in cart from the item page |
@@ -79,3 +64,50 @@ docker stop my-market-app
 
 In-memory H2, started with the app. Schema and demo items are applied by Liquibase
 (`src/main/resources/db/changelog`).
+
+### Schema
+
+```mermaid
+erDiagram
+    items ||--o| cart_items : "in cart"
+    items ||--o{ order_items : "ordered as"
+    orders ||--o{ order_items : "contains"
+
+    items {
+        bigint id PK
+        varchar title
+        varchar description
+        bigint price
+        bytea image
+    }
+    cart_items {
+        bigint id PK
+        bigint item_id FK
+        int count
+    }
+    orders {
+        bigint id PK
+        bigint total_sum
+    }
+    order_items {
+        bigint id PK
+        bigint order_id FK
+        bigint item_id FK
+        int count
+    }
+```
+
+## Tests
+
+```bash
+./mvnw test
+```
+
+### Unit (Mockito, no Spring context)
+- Services: `CartServiceUnitTest`, `ItemServiceUnitTest`, `OrderServiceUnitTest`
+- Mappers: `ItemMapperTest`, `OrderMapperTest`
+
+### Integration
+- End-to-end web flow: `ShopFlowIntegrationTest`
+- Controllers: `ItemControllerTest`, `CartControllerTest`, `OrderControllerTest`, `ImageControllerTest`
+- Services: `CartServiceIntegrationTest`, `ItemServiceIntegrationTest`, `OrderServiceIntegrationTest`
