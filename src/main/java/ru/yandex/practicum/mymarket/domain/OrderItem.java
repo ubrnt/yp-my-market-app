@@ -8,6 +8,7 @@ import org.springframework.data.relational.core.mapping.Table;
 public class OrderItem {
 
     @Id
+    @Column("id")
     private Long id;
 
     @Column("order_id")
@@ -16,6 +17,7 @@ public class OrderItem {
     @Column("item_id")
     private Long itemId;
 
+    @Column("count")
     private int count;
 
     public Long getId() {

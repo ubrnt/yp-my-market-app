@@ -8,12 +8,16 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Item {
 
     @Id
+    @Column("id")
     private Long id;
 
+    @Column("title")
     private String title;
 
+    @Column("description")
     private String description;
 
+    @Column("price")
     private long price;
 
     @Column("image_path")

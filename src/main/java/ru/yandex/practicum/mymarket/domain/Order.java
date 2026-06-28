@@ -8,6 +8,7 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Order {
 
     @Id
+    @Column("id")
     private Long id;
 
     @Column("total_sum")
