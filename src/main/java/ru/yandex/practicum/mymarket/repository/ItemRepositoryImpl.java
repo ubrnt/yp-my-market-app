@@ -5,6 +5,7 @@ import io.r2dbc.spi.RowMetadata;
 import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;
 import ru.yandex.practicum.mymarket.dto.SortType;
+import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 
 public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
@@ -18,7 +19,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     }
 
     @Override
-    public Flux<ItemRow> findItemsForPage(String search, SortType sort, int limit, long offset) {
+    public Flux<ItemDetailedRow> findForPage(String search, SortType sort, int limit, long offset) {
         boolean hasSearch = hasSearch(search);
         String sql = "SELECT i.id, i.title, i.description, i.image_path, i.price, "
                 + "COALESCE(ci.count, 0) AS count "
@@ -36,11 +37,11 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
             spec = spec.bind("search", pattern(search));
         }
 
-        return spec.map(this::toItemRow).all();
+        return spec.map(this::toItemDetailedRow).all();
     }
 
-    private ItemRow toItemRow(Row row, RowMetadata metadata) {
-        return new ItemRow(
+    private ItemDetailedRow toItemDetailedRow(Row row, RowMetadata metadata) {
+        return new ItemDetailedRow(
                 row.get("id", Long.class),
                 row.get("title", String.class),
                 row.get("description", String.class),
