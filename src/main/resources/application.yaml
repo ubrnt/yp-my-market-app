@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+app:
+  items-page:
+    row-size: 3
+
+spring:
+  application:
+    name: my-market-app
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: none
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
