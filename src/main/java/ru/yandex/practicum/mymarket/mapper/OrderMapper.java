@@ -11,22 +11,22 @@ import ru.yandex.practicum.mymarket.dto.OrderItemDto;
 @Component
 public class OrderMapper {
 
-    public OrderDto toDto(Order order) {
-        List<OrderItemDto> items = order.getItems().stream()
-                .map(this::toItemDto)
-                .toList();
-
-        return new OrderDto(order.getId(), items, order.getTotalSum());
-    }
-
-    private OrderItemDto toItemDto(OrderItem orderItem) {
-        Item item = orderItem.getItem();
-
-        return new OrderItemDto(
-                item.getId(),
-                item.getTitle(),
-                item.getPrice(),
-                orderItem.getCount()
-        );
-    }
+//    public OrderDto toDto(Order order) {
+//        List<OrderItemDto> items = order.getItems().stream()
+//                .map(this::toItemDto)
+//                .toList();
+//
+//        return new OrderDto(order.getId(), items, order.getTotalSum());
+//    }
+//
+//    private OrderItemDto toItemDto(OrderItem orderItem) {
+//        Item item = orderItem.getItem();
+//
+//        return new OrderItemDto(
+//                item.getId(),
+//                item.getTitle(),
+//                item.getPrice(),
+//                orderItem.getCount()
+//        );
+//    }
 }
