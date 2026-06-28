@@ -9,24 +9,24 @@ Store web app: browse items, manage a cart, place orders.
 - Spring Data JPA + Hibernate
 - H2 (in-memory), schema and seed data via Liquibase
 - Executable JAR with embedded Tomcat
-- Maven
+- Gradle
 
 ## Build
 
 ```bash
-./mvnw package
+./gradlew build
 ```
 
 ## Run
 
 ```bash
-./mvnw spring-boot:run
+./gradlew bootRun
 ```
 
 or
 
 ```bash
-java -jar target/my-market-app-1.0.0-SNAPSHOT.jar
+java -jar build/libs/my-market-app-1.0.0-SNAPSHOT.jar
 ```
 
 App starts on http://localhost:8080
@@ -100,7 +100,7 @@ erDiagram
 ## Tests
 
 ```bash
-./mvnw test
+./gradlew test
 ```
 
 ### Unit (Mockito, no Spring context)
