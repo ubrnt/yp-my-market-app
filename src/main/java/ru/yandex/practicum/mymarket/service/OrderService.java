@@ -27,43 +27,43 @@ public class OrderService {
         this.orderMapper = orderMapper;
     }
 
-    @Transactional
-    public Long buy() {
-        List<CartItem> cartItems = cartItemRepository.findAll();
-
-        if (cartItems.isEmpty()) {
-            throw new IllegalStateException("Cart is empty");
-        }
-
-        Order order = new Order();
-        long totalSum = 0;
-        for (CartItem cartItem : cartItems) {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setItem(cartItem.getItem());
-            orderItem.setCount(cartItem.getCount());
-            order.addItem(orderItem);
-            totalSum += cartItem.getItem().getPrice() * cartItem.getCount();
-        }
-        order.setTotalSum(totalSum);
-
-        Long orderId = orderRepository.save(order).getId();
-        cartItemRepository.deleteAll();
-
-        return orderId;
-    }
-
-    @Transactional(readOnly = true)
-    public List<OrderDto> getOrders() {
-        return orderRepository.findAll().stream()
-                .map(orderMapper::toDto)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public OrderDto getOrder(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ORDER, id));
-
-        return orderMapper.toDto(order);
-    }
+//    @Transactional
+//    public Long buy() {
+//        List<CartItem> cartItems = cartItemRepository.findAll();
+//
+//        if (cartItems.isEmpty()) {
+//            throw new IllegalStateException("Cart is empty");
+//        }
+//
+//        Order order = new Order();
+//        long totalSum = 0;
+//        for (CartItem cartItem : cartItems) {
+//            OrderItem orderItem = new OrderItem();
+//            orderItem.setItem(cartItem.getItem());
+//            orderItem.setCount(cartItem.getCount());
+//            order.addItem(orderItem);
+//            totalSum += cartItem.getItem().getPrice() * cartItem.getCount();
+//        }
+//        order.setTotalSum(totalSum);
+//
+//        Long orderId = orderRepository.save(order).getId();
+//        cartItemRepository.deleteAll();
+//
+//        return orderId;
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public List<OrderDto> getOrders() {
+//        return orderRepository.findAll().stream()
+//                .map(orderMapper::toDto)
+//                .toList();
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public OrderDto getOrder(Long id) {
+//        Order order = orderRepository.findById(id)
+//                .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ORDER, id));
+//
+//        return orderMapper.toDto(order);
+//    }
 }

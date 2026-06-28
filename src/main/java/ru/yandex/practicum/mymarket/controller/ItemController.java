@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.yandex.practicum.mymarket.dto.Action;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.SortType;
@@ -34,49 +33,49 @@ public class ItemController {
                         @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER) int pageNumber,
                         @RequestParam(defaultValue = DEFAULT_PAGE_SIZE) int pageSize,
                         Model model) {
-        ItemsPageDto page = itemService.getItems(search, sort, pageNumber, pageSize);
+//        ItemsPageDto page = itemService.getItems(search, sort, pageNumber, pageSize);
 
-        model.addAttribute("items", page.items());
-        model.addAttribute("paging", page.paging());
-        model.addAttribute("search", search);
-        model.addAttribute("sort", sort);
+//        model.addAttribute("items", page.items());
+//        model.addAttribute("paging", page.paging());
+//        model.addAttribute("search", search);
+//        model.addAttribute("sort", sort);
 
         return "items";
     }
 
-    @PostMapping("/items")
-    public String changeCountFromList(@RequestParam Long id,
-                                      @RequestParam Action action,
-                                      @RequestParam(defaultValue = "") String search,
-                                      @RequestParam(defaultValue = DEFAULT_SORT) SortType sort,
-                                      @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER) int pageNumber,
-                                      @RequestParam(defaultValue = DEFAULT_PAGE_SIZE) int pageSize,
-                                      RedirectAttributes redirectAttributes) {
-        cartService.changeCount(id, action);
+//    @PostMapping("/items")
+//    public String changeCountFromList(@RequestParam Long id,
+//                                      @RequestParam Action action,
+//                                      @RequestParam(defaultValue = "") String search,
+//                                      @RequestParam(defaultValue = DEFAULT_SORT) SortType sort,
+//                                      @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER) int pageNumber,
+//                                      @RequestParam(defaultValue = DEFAULT_PAGE_SIZE) int pageSize,
+//                                      RedirectAttributes redirectAttributes) {
+//        cartService.changeCount(id, action);
+//
+//        redirectAttributes.addAttribute("search", search);
+//        redirectAttributes.addAttribute("sort", sort);
+//        redirectAttributes.addAttribute("pageNumber", pageNumber);
+//        redirectAttributes.addAttribute("pageSize", pageSize);
+//
+//        return "redirect:/items";
+//    }
 
-        redirectAttributes.addAttribute("search", search);
-        redirectAttributes.addAttribute("sort", sort);
-        redirectAttributes.addAttribute("pageNumber", pageNumber);
-        redirectAttributes.addAttribute("pageSize", pageSize);
-
-        return "redirect:/items";
-    }
-
-    @GetMapping("/items/{id}")
-    public String item(@PathVariable Long id, Model model) {
-        model.addAttribute("item", itemService.getItem(id));
-
-        return "item";
-    }
-
-    @PostMapping("/items/{id}")
-    public String changeCountFromCard(@PathVariable Long id,
-                                      @RequestParam Action action,
-                                      Model model) {
-        cartService.changeCount(id, action);
-
-        model.addAttribute("item", itemService.getItem(id));
-
-        return "item";
-    }
+//    @GetMapping("/items/{id}")
+//    public String item(@PathVariable Long id, Model model) {
+//        model.addAttribute("item", itemService.getItem(id));
+//
+//        return "item";
+//    }
+//
+//    @PostMapping("/items/{id}")
+//    public String changeCountFromCard(@PathVariable Long id,
+//                                      @RequestParam Action action,
+//                                      Model model) {
+//        cartService.changeCount(id, action);
+//
+//        model.addAttribute("item", itemService.getItem(id));
+//
+//        return "item";
+//    }
 }

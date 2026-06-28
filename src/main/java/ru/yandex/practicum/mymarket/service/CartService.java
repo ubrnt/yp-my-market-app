@@ -30,77 +30,77 @@ public class CartService {
         this.itemMapper = itemMapper;
     }
 
-    @Transactional(readOnly = true)
-    public List<ItemDto> getCartItems() {
-        return cartItemRepository.findAll().stream()
-                .map(cartItem -> itemMapper.toDto(cartItem.getItem(), cartItem.getCount()))
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public long getTotal() {
-        return cartItemRepository.findAll().stream()
-                .mapToLong(cartItem -> cartItem.getItem().getPrice() * cartItem.getCount())
-                .sum();
-    }
-
-    @Transactional(readOnly = true)
-    public int getCount(Long itemId) {
-        return cartItemRepository.findByItemId(itemId)
-                .map(CartItem::getCount)
-                .orElse(0);
-    }
-
-    @Transactional(readOnly = true)
-    public Map<Long, Integer> getCountByItemIds(Collection<Long> itemIds) {
-        if (itemIds.isEmpty()) {
-            return Map.of();
-        }
-
-        return cartItemRepository.findByItemIdIn(itemIds).stream()
-                .collect(Collectors.toMap(
-                        cartItem -> cartItem.getItem().getId(),
-                        CartItem::getCount));
-    }
-
-    @Transactional
-    public void changeCount(Long itemId, Action action) {
-        CartItem cartItem = cartItemRepository.findByItemId(itemId).orElse(null);
-        switch (action) {
-            case PLUS -> plus(itemId, cartItem);
-            case MINUS -> minus(cartItem);
-            case DELETE -> {
-                if (cartItem != null) {
-                    cartItemRepository.delete(cartItem);
-                }
-            }
-        }
-    }
-
-    private void plus(Long itemId, CartItem cartItem) {
-        if (cartItem == null) {
-            Item item = itemRepository.findById(itemId)
-                    .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ITEM, itemId));
-            CartItem created = new CartItem();
-            created.setItem(item);
-            created.setCount(1);
-            cartItemRepository.save(created);
-        } else {
-            cartItem.setCount(cartItem.getCount() + 1);
-            cartItemRepository.save(cartItem);
-        }
-    }
-
-    private void minus(CartItem cartItem) {
-        if (cartItem == null) {
-            return;
-        }
-        int count = cartItem.getCount() - 1;
-        if (count <= 0) {
-            cartItemRepository.delete(cartItem);
-        } else {
-            cartItem.setCount(count);
-            cartItemRepository.save(cartItem);
-        }
-    }
+//    @Transactional(readOnly = true)
+//    public List<ItemDto> getCartItems() {
+//        return cartItemRepository.findAll().stream()
+//                .map(cartItem -> itemMapper.toDto(cartItem.getItem(), cartItem.getCount()))
+//                .toList();
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public long getTotal() {
+//        return cartItemRepository.findAll().stream()
+//                .mapToLong(cartItem -> cartItem.getItem().getPrice() * cartItem.getCount())
+//                .sum();
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public int getCount(Long itemId) {
+//        return cartItemRepository.findByItemId(itemId)
+//                .map(CartItem::getCount)
+//                .orElse(0);
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public Map<Long, Integer> getCountByItemIds(Collection<Long> itemIds) {
+//        if (itemIds.isEmpty()) {
+//            return Map.of();
+//        }
+//
+//        return cartItemRepository.findByItemIdIn(itemIds).stream()
+//                .collect(Collectors.toMap(
+//                        cartItem -> cartItem.getItem().getId(),
+//                        CartItem::getCount));
+//    }
+//
+//    @Transactional
+//    public void changeCount(Long itemId, Action action) {
+//        CartItem cartItem = cartItemRepository.findByItemId(itemId).orElse(null);
+//        switch (action) {
+//            case PLUS -> plus(itemId, cartItem);
+//            case MINUS -> minus(cartItem);
+//            case DELETE -> {
+//                if (cartItem != null) {
+//                    cartItemRepository.delete(cartItem);
+//                }
+//            }
+//        }
+//    }
+//
+//    private void plus(Long itemId, CartItem cartItem) {
+//        if (cartItem == null) {
+//            Item item = itemRepository.findById(itemId)
+//                    .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ITEM, itemId));
+//            CartItem created = new CartItem();
+//            created.setItem(item);
+//            created.setCount(1);
+//            cartItemRepository.save(created);
+//        } else {
+//            cartItem.setCount(cartItem.getCount() + 1);
+//            cartItemRepository.save(cartItem);
+//        }
+//    }
+//
+//    private void minus(CartItem cartItem) {
+//        if (cartItem == null) {
+//            return;
+//        }
+//        int count = cartItem.getCount() - 1;
+//        if (count <= 0) {
+//            cartItemRepository.delete(cartItem);
+//        } else {
+//            cartItem.setCount(count);
+//            cartItemRepository.save(cartItem);
+//        }
+//    }
 }

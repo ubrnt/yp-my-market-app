@@ -19,7 +19,7 @@ public class OrderController {
 
     @GetMapping("/orders")
     public String orders(Model model) {
-        model.addAttribute("orders", orderService.getOrders());
+//        model.addAttribute("orders", orderService.getOrders());
 
         return "orders";
     }
@@ -28,16 +28,17 @@ public class OrderController {
     public String order(@PathVariable Long id,
                         @RequestParam(defaultValue = "false") boolean newOrder,
                         Model model) {
-        model.addAttribute("order", orderService.getOrder(id));
-        model.addAttribute("newOrder", newOrder);
+//        model.addAttribute("order", orderService.getOrder(id));
+//        model.addAttribute("newOrder", newOrder);
 
         return "order";
     }
 
     @PostMapping("/buy")
     public String buy() {
-        Long orderId = orderService.buy();
+//        Long orderId = orderService.buy();
 
-        return "redirect:/orders/" + orderId + "?newOrder=true";
+//        return "redirect:/orders/" + orderId + "?newOrder=true";
+        return "";
     }
 }

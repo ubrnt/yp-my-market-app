@@ -37,58 +37,58 @@ public class ItemService {
         this.rowSize = rowSize;
     }
 
-    @Transactional(readOnly = true)
-    public ItemsPageDto getItems(String search, SortType sort, int pageNumber, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, toSort(sort));
-        Page<Item> page = (search == null || search.isBlank())
-                ? itemRepository.findAll(pageable)
-                : itemRepository.search(search, pageable);
-
-        List<Item> content = page.getContent();
-        List<Long> itemIds = content.stream().map(Item::getId).toList();
-        Map<Long, Integer> counts = cartService.getCountByItemIds(itemIds);
-        List<ItemDto> items = content.stream()
-                .map(item -> itemMapper.toDto(item, counts.getOrDefault(item.getId(), 0)))
-                .toList();
-
-        PagingDto paging = new PagingDto(pageSize, pageNumber, page.hasPrevious(), page.hasNext());
-
-        return new ItemsPageDto(toRows(items), paging);
-    }
-
-    @Transactional(readOnly = true)
-    public ItemDto getItem(Long id) {
-        Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ITEM, id));
-        
-        return itemMapper.toDto(item, cartService.getCount(id));
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] getImage(Long id) {
-        return itemRepository.findImageById(id);
-    }
-
-    private Sort toSort(SortType sort) {
-        return switch (sort) {
-            case ALPHA -> Sort.by("title");
-            case PRICE -> Sort.by("price");
-            case NO -> Sort.unsorted();
-        };
-    }
-
-    private List<List<ItemDto>> toRows(List<ItemDto> items) {
-        List<List<ItemDto>> rows = new ArrayList<>();
-
-        for (int from = 0; from < items.size(); from += rowSize) {
-            int to = Math.min(from + rowSize, items.size());
-            List<ItemDto> row = new ArrayList<>(items.subList(from, to));
-            while (row.size() < rowSize) {
-                row.add(ItemDto.dummy());
-            }
-            rows.add(row);
-        }
-
-        return rows;
-    }
+//    @Transactional(readOnly = true)
+//    public ItemsPageDto getItems(String search, SortType sort, int pageNumber, int pageSize) {
+//        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, toSort(sort));
+//        Page<Item> page = (search == null || search.isBlank())
+//                ? itemRepository.findAll(pageable)
+//                : itemRepository.search(search, pageable);
+//
+//        List<Item> content = page.getContent();
+//        List<Long> itemIds = content.stream().map(Item::getId).toList();
+//        Map<Long, Integer> counts = cartService.getCountByItemIds(itemIds);
+//        List<ItemDto> items = content.stream()
+//                .map(item -> itemMapper.toDto(item, counts.getOrDefault(item.getId(), 0)))
+//                .toList();
+//
+//        PagingDto paging = new PagingDto(pageSize, pageNumber, page.hasPrevious(), page.hasNext());
+//
+//        return new ItemsPageDto(toRows(items), paging);
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public ItemDto getItem(Long id) {
+//        Item item = itemRepository.findById(id)
+//                .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ITEM, id));
+//
+//        return itemMapper.toDto(item, cartService.getCount(id));
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public byte[] getImage(Long id) {
+//        return itemRepository.findImageById(id);
+//    }
+//
+//    private Sort toSort(SortType sort) {
+//        return switch (sort) {
+//            case ALPHA -> Sort.by("title");
+//            case PRICE -> Sort.by("price");
+//            case NO -> Sort.unsorted();
+//        };
+//    }
+//
+//    private List<List<ItemDto>> toRows(List<ItemDto> items) {
+//        List<List<ItemDto>> rows = new ArrayList<>();
+//
+//        for (int from = 0; from < items.size(); from += rowSize) {
+//            int to = Math.min(from + rowSize, items.size());
+//            List<ItemDto> row = new ArrayList<>(items.subList(from, to));
+//            while (row.size() < rowSize) {
+//                row.add(ItemDto.dummy());
+//            }
+//            rows.add(row);
+//        }
+//
+//        return rows;
+//    }
 }

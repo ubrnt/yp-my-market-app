@@ -18,14 +18,15 @@ public class ImageController {
 
     @GetMapping("/images/{id}")
     public ResponseEntity<byte[]> image(@PathVariable Long id) {
-        byte[] image = itemService.getImage(id);
-
-        if (image == null || image.length == 0) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_PNG)
-                .body(image);
+//        byte[] image = itemService.getImage(id);
+//
+//        if (image == null || image.length == 0) {
+//            return ResponseEntity.notFound().build();
+//        }
+//
+//        return ResponseEntity.ok()
+//                .contentType(MediaType.IMAGE_PNG)
+//                .body(image);
+        return null;
     }
 }

@@ -28,15 +28,15 @@ public class CartController {
 
     @PostMapping
     public String changeCount(@RequestParam Long id, @RequestParam Action action, Model model) {
-        cartService.changeCount(id, action);
-
-        fillModel(model);
-
+//        cartService.changeCount(id, action);
+//
+//        fillModel(model);
+//
         return "cart";
     }
 
     private void fillModel(Model model) {
-        model.addAttribute("items", cartService.getCartItems());
-        model.addAttribute("total", cartService.getTotal());
+//        model.addAttribute("items", cartService.getCartItems());
+//        model.addAttribute("total", cartService.getTotal());
     }
 }
