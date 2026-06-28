@@ -3,5 +3,5 @@ package ru.yandex.practicum.mymarket.repository;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import ru.yandex.practicum.mymarket.domain.Item;
 
-public interface ItemRepository extends R2dbcRepository<Item, Long> {
+public interface ItemRepository extends R2dbcRepository<Item, Long>, ItemRepositoryCustom {
 }

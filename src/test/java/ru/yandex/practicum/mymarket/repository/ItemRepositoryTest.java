@@ -1,48 +1,68 @@
 package ru.yandex.practicum.mymarket.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.r2dbc.test.autoconfigure.DataR2dbcTest;
 import reactor.test.StepVerifier;
 import ru.yandex.practicum.mymarket.domain.Item;
+import ru.yandex.practicum.mymarket.dto.SortType;
 
-@DataR2dbcTest
-class ItemRepositoryTest {
-
-    @Autowired
-    ItemRepository itemRepository;
-
-    @Test
-    void seededItemMapingTest() {
-        StepVerifier.create(itemRepository.findById(1L))
-                .assertNext(item -> {
-                    assertEquals("Бейсболка чёрная", item.getTitle());
-                    assertEquals("Классическая бейсболка из хлопка с регулируемым размером.", item.getDescription());
-                    assertEquals(990L, item.getPrice());
-                    assertEquals("black-cap.png", item.getImagePath());
-                })
-                .verifyComplete();
-    }
+class ItemRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     void itemSaveAndFindTest() {
-        Item item = new Item();
-        item.setTitle("Тестовый товар");
-        item.setDescription("Описание");
-        item.setPrice(1234L);
-        item.setImagePath("test.png");
+        Item saved = saveItem("Тестовый товар", "Описание", 1234L, "test.png");
 
-        StepVerifier.create(itemRepository.save(item).flatMap(saved -> itemRepository.findById(saved.getId())))
+        StepVerifier.create(itemRepository.findById(saved.getId()))
                 .assertNext(found -> {
-                    assertNotNull(found.getId());
                     assertEquals("Тестовый товар", found.getTitle());
                     assertEquals("Описание", found.getDescription());
                     assertEquals(1234L, found.getPrice());
                     assertEquals("test.png", found.getImagePath());
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    void findItemsForPageSortsByPriceTest() {
+        saveItem("В", "", 300L, "c.png");
+        saveItem("А", "", 100L, "a.png");
+        saveItem("Б", "", 200L, "b.png");
+
+        var rows = itemRepository.findItemsForPage(null, SortType.PRICE, 10, 0).collectList().block();
+
+        assertEquals(3, rows.size());
+        assertEquals(100L, rows.get(0).price());
+        assertEquals(200L, rows.get(1).price());
+        assertEquals(300L, rows.get(2).price());
+    }
+
+    @Test
+    void findItemsForPageFiltersBySearchTest() {
+        saveItem("Мяч футбольный", "круглый", 100L, "1.png");
+        saveItem("Сувенир", "внутри маленький мяч", 50L, "2.png");
+        saveItem("Ракетка", "для тенниса", 200L, "3.png");
+
+        var rows = itemRepository.findItemsForPage("мяч", SortType.NO, 10, 0).collectList().block();
+
+        assertEquals(2, rows.size());
+        rows.forEach(row -> assertTrue(
+                row.title().toLowerCase().contains("мяч") || row.description().toLowerCase().contains("мяч")));
+    }
+
+    @Test
+    void findItemsForPageReflectsCartCountTest() {
+        Item inCart = saveItem("В корзине", "", 100L, "a.png");
+        Item notInCart = saveItem("Не в корзине", "", 200L, "b.png");
+        saveCartItem(inCart.getId(), 2);
+
+        var rows = itemRepository.findItemsForPage(null, SortType.NO, 10, 0).collectList().block();
+
+        assertEquals(2, rows.size());
+        assertEquals(inCart.getId(), rows.get(0).id());
+        assertEquals(2, rows.get(0).count());
+        assertEquals(notInCart.getId(), rows.get(1).id());
+        assertEquals(0, rows.get(1).count());
     }
 }
