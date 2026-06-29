@@ -31,11 +31,11 @@ class CartServiceTest {
 
     @BeforeEach
     void setUp() {
-        cartService = new CartService(cartItemRepository, new ItemMapper("images/"));
+        cartService = new CartService(cartItemRepository, new ItemMapper("images/", 3));
     }
 
     @Test
-    void getCartItemsTest() {
+    void getCartItems_mapsToDtoWithCount() {
         when(cartItemRepository.findAllWithItems())
                 .thenReturn(Flux.just(
                         new ItemDetailedRow(1L, "Мяч", "круглый", "ball.png", 990L, 2),
@@ -60,7 +60,7 @@ class CartServiceTest {
     }
 
     @Test
-    void plusIncrementsExistingItemTest() {
+    void plus_whenAlreadyInCart_increments() {
         CartItem existing = cartItem(10L, 1L, 2);
         when(cartItemRepository.findByItemId(1L)).thenReturn(Mono.just(existing));
         when(cartItemRepository.save(existing)).thenReturn(Mono.just(existing));
@@ -72,7 +72,7 @@ class CartServiceTest {
     }
 
     @Test
-    void plusAddsNewItemWhenAbsentTest() {
+    void plus_whenNotInCart_createsCartItemWithCountOne() {
         when(cartItemRepository.findByItemId(1L)).thenReturn(Mono.empty());
         when(cartItemRepository.save(any(CartItem.class))).thenReturn(Mono.just(new CartItem()));
 
@@ -85,7 +85,7 @@ class CartServiceTest {
     }
 
     @Test
-    void minusDecrementsTest() {
+    void minus_whenCountAboveOne_decrements() {
         CartItem existing = cartItem(10L, 1L, 3);
         when(cartItemRepository.findByItemId(1L)).thenReturn(Mono.just(existing));
         when(cartItemRepository.save(existing)).thenReturn(Mono.just(existing));
@@ -97,7 +97,7 @@ class CartServiceTest {
     }
 
     @Test
-    void minusRemovesWhenReachesZeroTest() {
+    void minus_whenCountReachesZero_deletes() {
         CartItem existing = cartItem(10L, 1L, 1);
         when(cartItemRepository.findByItemId(1L)).thenReturn(Mono.just(existing));
         when(cartItemRepository.delete(existing)).thenReturn(Mono.empty());
@@ -109,7 +109,7 @@ class CartServiceTest {
     }
 
     @Test
-    void deleteRemovesByItemIdTest() {
+    void delete_removesCartItem() {
         when(cartItemRepository.deleteByItemId(1L)).thenReturn(Mono.empty());
 
         StepVerifier.create(cartService.changeCount(1L, Action.DELETE)).verifyComplete();

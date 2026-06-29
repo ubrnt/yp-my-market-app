@@ -12,7 +12,7 @@ class OrderMapperTest {
     private final OrderMapper orderMapper = new OrderMapper();
 
     @Test
-    void toDtoBuildsSingleOrderTest() {
+    void toDto_mapsOrderWithItems() {
         List<OrderItemDetailedRow> rows = List.of(
                 new OrderItemDetailedRow(7L, 2970L, 1L, "Мяч", 990L, 2),
                 new OrderItemDetailedRow(7L, 2970L, 2L, "Ракетка", 990L, 1));
@@ -33,7 +33,7 @@ class OrderMapperTest {
     }
 
     @Test
-    void toDtoListGroupsRowsByOrderTest() {
+    void toDtoList_groupsRowsByOrder() {
         List<OrderItemDetailedRow> rows = List.of(
                 new OrderItemDetailedRow(7L, 990L, 1L, "Мяч", 990L, 1),
                 new OrderItemDetailedRow(8L, 1480L, 1L, "Мяч", 990L, 1),

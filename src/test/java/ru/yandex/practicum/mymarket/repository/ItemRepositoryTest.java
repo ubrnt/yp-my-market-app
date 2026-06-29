@@ -11,7 +11,7 @@ import ru.yandex.practicum.mymarket.dto.SortType;
 class ItemRepositoryTest extends AbstractRepositoryTest {
 
     @Test
-    void itemSaveAndFindTest() {
+    void save_thenFindById_returnsItem() {
         Item saved = saveItem("Тестовый товар", "Описание", 1234L, "test.png");
 
         StepVerifier.create(itemRepository.findById(saved.getId()))
@@ -25,7 +25,7 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
-    void findItemsForPageSortsByPriceTest() {
+    void findForPage_sortByPrice_ordersAscending() {
         saveItem("В", "", 300L, "c.png");
         saveItem("А", "", 100L, "a.png");
         saveItem("Б", "", 200L, "b.png");
@@ -39,7 +39,7 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
-    void findItemsForPageFiltersBySearchTest() {
+    void findForPage_withSearch_filtersByTitleOrDescription() {
         saveItem("Мяч футбольный", "круглый", 100L, "1.png");
         saveItem("Сувенир", "внутри маленький мяч", 50L, "2.png");
         saveItem("Ракетка", "для тенниса", 200L, "3.png");
@@ -52,7 +52,7 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
-    void findByIdWithCountInCartTest() {
+    void findByIdWithCountInCart_returnsItemWithCartCount() {
         Item inCart = saveItem("В корзине", "опис", 100L, "a.png");
         Item notInCart = saveItem("Не в корзине", "опис", 200L, "b.png");
         saveCartItem(inCart.getId(), 4);
@@ -73,7 +73,7 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
-    void findItemsForPageReflectsCartCountTest() {
+    void findForPage_setsCountFromCart() {
         Item inCart = saveItem("В корзине", "", 100L, "a.png");
         Item notInCart = saveItem("Не в корзине", "", 200L, "b.png");
         saveCartItem(inCart.getId(), 2);

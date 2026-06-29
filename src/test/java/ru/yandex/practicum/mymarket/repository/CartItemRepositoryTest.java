@@ -10,7 +10,7 @@ import ru.yandex.practicum.mymarket.domain.Item;
 class CartItemRepositoryTest extends AbstractRepositoryTest {
 
     @Test
-    void cartItemSaveAndFindTest() {
+    void save_thenFindById_returnsCartItem() {
         Item item = saveItem("Товар", "Описание", 100L, "t.png");
         CartItem saved = saveCartItem(item.getId(), 3);
 
@@ -23,7 +23,7 @@ class CartItemRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
-    void findAllWithItemsTest() {
+    void findAllWithItems_joinsItemDetails() {
         Item item = saveItem("Мяч", "круглый", 990L, "ball.png");
         saveCartItem(item.getId(), 3);
 

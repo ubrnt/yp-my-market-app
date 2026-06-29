@@ -10,7 +10,7 @@ import ru.yandex.practicum.mymarket.domain.Order;
 class OrderRepositoryTest extends AbstractRepositoryTest {
 
     @Test
-    void orderSaveAndFindTest() {
+    void save_thenFindById_returnsOrder() {
         Order saved = saveOrder(500L);
 
         StepVerifier.create(orderRepository.findById(saved.getId()))
@@ -19,7 +19,7 @@ class OrderRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
-    void findAllWithItemsTest() {
+    void findAllWithItems_joinsItemsAcrossOrders() {
         Item item = saveItem("Мяч", "круглый", 990L, "ball.png");
         Order order = saveOrder(1980L);
         saveOrderItem(order.getId(), item.getId(), 2);
@@ -37,7 +37,7 @@ class OrderRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
-    void findByIdWithItemsTest() {
+    void findByIdWithItems_returnsOnlyThatOrder() {
         Item item = saveItem("Мяч", "круглый", 990L, "ball.png");
         Order firstOrder = saveOrder(990L);
         Order secondOrder = saveOrder(1980L);
