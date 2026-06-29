@@ -35,26 +35,20 @@ class CartServiceTest {
     }
 
     @Test
-    void getCartItems_mapsToDtoWithCount() {
+    void getCart_mapsItemsAndComputesTotal() {
         when(cartItemRepository.findAllWithItems())
                 .thenReturn(Flux.just(
                         new ItemDetailedRow(1L, "Мяч", "круглый", "ball.png", 990L, 2),
                         new ItemDetailedRow(2L, "Ракетка", "для тенниса", "racket.png", 1990L, 1)));
 
-        StepVerifier.create(cartService.getCartItems())
-                .assertNext(dto -> {
-                    assertEquals(1L, dto.id());
-                    assertEquals("Мяч", dto.title());
-                    assertEquals("images/1", dto.imgPath());
-                    assertEquals(990L, dto.price());
-                    assertEquals(2, dto.count());
-                })
-                .assertNext(dto -> {
-                    assertEquals(2L, dto.id());
-                    assertEquals("Ракетка", dto.title());
-                    assertEquals("images/2", dto.imgPath());
-                    assertEquals(1990L, dto.price());
-                    assertEquals(1, dto.count());
+        StepVerifier.create(cartService.getCart())
+                .assertNext(cart -> {
+                    assertEquals(2, cart.items().size());
+                    assertEquals(1L, cart.items().get(0).id());
+                    assertEquals("images/1", cart.items().get(0).imgPath());
+                    assertEquals(2, cart.items().get(0).count());
+                    assertEquals(2L, cart.items().get(1).id());
+                    assertEquals(990L * 2 + 1990L, cart.total());
                 })
                 .verifyComplete();
     }

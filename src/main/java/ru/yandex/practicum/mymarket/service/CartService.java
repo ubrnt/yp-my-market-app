@@ -1,10 +1,11 @@
 package ru.yandex.practicum.mymarket.service;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.domain.CartItem;
 import ru.yandex.practicum.mymarket.dto.Action;
+import ru.yandex.practicum.mymarket.dto.CartDto;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
@@ -20,8 +21,11 @@ public class CartService {
         this.itemMapper = itemMapper;
     }
 
-    public Flux<ItemDto> getCartItems() {
-        return cartItemRepository.findAllWithItems().map(itemMapper::toDto);
+    public Mono<CartDto> getCart() {
+        return cartItemRepository.findAllWithItems()
+                .map(itemMapper::toDto)
+                .collectList()
+                .map(items -> new CartDto(items, total(items)));
     }
 
     public Mono<Void> changeCount(Long itemId, Action action) {
@@ -42,6 +46,13 @@ public class CartService {
                 .then();
     }
 
+    private Mono<CartItem> addNewToCart(Long itemId) {
+        CartItem cartItem = new CartItem();
+        cartItem.setItemId(itemId);
+        cartItem.setCount(1);
+        return cartItemRepository.save(cartItem);
+    }
+
     private Mono<Void> decrease(Long itemId) {
         return cartItemRepository.findByItemId(itemId)
                 .flatMap(cartItem -> {
@@ -54,12 +65,7 @@ public class CartService {
                 });
     }
 
-    private Mono<CartItem> addNewToCart(Long itemId) {
-        CartItem cartItem = new CartItem();
-
-        cartItem.setItemId(itemId);
-        cartItem.setCount(1);
-
-        return cartItemRepository.save(cartItem);
+    private long total(List<ItemDto> items) {
+        return items.stream().mapToLong(item -> item.price() * item.count()).sum();
     }
 }
