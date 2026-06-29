@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.mymarket.domain.OrderItem;
 import ru.yandex.practicum.mymarket.dto.OrderDto;
+import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 import ru.yandex.practicum.mymarket.repository.projection.OrderItemDetailedRow;
 
 class OrderMapperTest {
@@ -49,5 +51,21 @@ class OrderMapperTest {
         assertEquals(8L, orders.get(1).id());
         assertEquals(1480L, orders.get(1).totalSum());
         assertEquals(2, orders.get(1).items().size());
+    }
+
+    @Test
+    void toOrderItems_buildsEntitiesFromCartRows() {
+        List<ItemDetailedRow> cartRows = List.of(
+                new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2),
+                new ItemDetailedRow(2L, "Ракетка", "о", "racket.png", 500L, 1));
+
+        List<OrderItem> orderItems = orderMapper.toOrderItems(7L, cartRows);
+
+        assertEquals(2, orderItems.size());
+        assertEquals(7L, orderItems.get(0).getOrderId());
+        assertEquals(1L, orderItems.get(0).getItemId());
+        assertEquals(2, orderItems.get(0).getCount());
+        assertEquals(7L, orderItems.get(1).getOrderId());
+        assertEquals(2L, orderItems.get(1).getItemId());
     }
 }

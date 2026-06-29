@@ -4,8 +4,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.mymarket.domain.OrderItem;
 import ru.yandex.practicum.mymarket.dto.OrderDto;
 import ru.yandex.practicum.mymarket.dto.OrderItemDto;
+import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 import ru.yandex.practicum.mymarket.repository.projection.OrderItemDetailedRow;
 
 @Component
@@ -26,5 +28,17 @@ public class OrderMapper {
                 .toList();
 
         return new OrderDto(first.orderId(), items, first.totalSum());
+    }
+
+    public List<OrderItem> toOrderItems(Long orderId, List<ItemDetailedRow> cartRows) {
+        return cartRows.stream()
+                .map(row -> {
+                    OrderItem orderItem = new OrderItem();
+                    orderItem.setOrderId(orderId);
+                    orderItem.setItemId(row.id());
+                    orderItem.setCount(row.count());
+                    return orderItem;
+                })
+                .toList();
     }
 }
