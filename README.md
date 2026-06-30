@@ -1,14 +1,14 @@
 # my-market-app
 
-Store web app: browse items, manage a cart, place orders.
+Store web app: browse items, manage a cart, place orders. Built on a fully reactive stack.
 
 ## Stack
 
 - Java 21, Spring Boot 4
-- Spring Web MVC + Thymeleaf
-- Spring Data JPA + Hibernate
-- H2 (in-memory), schema and seed data via Liquibase
-- Executable JAR with embedded Tomcat
+- Spring WebFlux + Thymeleaf (reactive), embedded Netty
+- Spring Data R2DBC + Project Reactor (`Mono`/`Flux`)
+- H2 (in-memory) via `r2dbc-h2`; schema and seed data via `schema.sql` / `data.sql`
+- Executable JAR
 - Gradle
 
 ## Build
@@ -26,7 +26,7 @@ Store web app: browse items, manage a cart, place orders.
 or
 
 ```bash
-java -jar build/libs/my-market-app-1.0.0-SNAPSHOT.jar
+java -jar build/libs/my-market-app-2.0.0-SNAPSHOT.jar
 ```
 
 App starts on http://localhost:8080
@@ -62,8 +62,12 @@ docker stop my-market-app
 
 ## Database
 
-In-memory H2, started with the app. Schema and demo items are applied by Liquibase
-(`src/main/resources/db/changelog`).
+In-memory H2 accessed reactively via R2DBC, started with the app. Schema (`schema.sql`)
+and demo items (`data.sql`) are applied at startup by Spring SQL init
+(`src/main/resources`).
+
+Item images are stored as files on the classpath (`src/main/resources/images`); the
+`items.image_path` column keeps the file name, and `ImageController` streams the file.
 
 ### Schema
 
@@ -78,7 +82,7 @@ erDiagram
         varchar title
         varchar description
         bigint price
-        bytea image
+        varchar image_path
     }
     cart_items {
         bigint id PK
@@ -107,7 +111,8 @@ erDiagram
 - Services: `CartServiceUnitTest`, `ItemServiceUnitTest`, `OrderServiceUnitTest`
 - Mappers: `ItemMapperTest`, `OrderMapperTest`
 
-### Integration
-- End-to-end web flow: `ShopFlowIntegrationTest`
-- Controllers: `ItemControllerTest`, `CartControllerTest`, `OrderControllerTest`, `ImageControllerTest`
-- Services: `CartServiceIntegrationTest`, `ItemServiceIntegrationTest`, `OrderServiceIntegrationTest`
+### Integration (Spring context)
+- Repositories (`@DataR2dbcTest`): `ItemRepositoryTest`, `CartItemRepositoryTest`, `OrderRepositoryTest`, `OrderItemRepositoryTest`
+- Controllers (`@WebFluxTest` + `WebTestClient`): `ItemControllerTest`, `CartControllerTest`, `OrderControllerTest`, `ImageControllerTest`
+- Services (`@SpringBootTest`, real R2DBC): `CartServiceIntegrationTest`, `ItemServiceIntegrationTest`, `OrderServiceIntegrationTest`
+- End-to-end flow (`@SpringBootTest` + `WebTestClient`): `ShopFlowIntegrationTest`
