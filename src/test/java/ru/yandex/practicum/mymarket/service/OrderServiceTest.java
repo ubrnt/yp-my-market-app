@@ -26,7 +26,7 @@ import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 import ru.yandex.practicum.mymarket.repository.projection.OrderItemDetailedRow;
 
 @ExtendWith(MockitoExtension.class)
-class kOrderServiceTest {
+class OrderServiceTest {
 
     @Mock
     OrderRepository orderRepository;
