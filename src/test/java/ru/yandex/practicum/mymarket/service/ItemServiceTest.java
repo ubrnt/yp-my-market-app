@@ -33,7 +33,7 @@ class ItemServiceTest {
 
     @BeforeEach
     void setUp() {
-        itemService = new ItemService(itemRepository, new ItemMapper("images/", ROW_SIZE));
+        itemService = new ItemService(itemRepository, new ItemMapper("images/", ROW_SIZE), "images/");
     }
 
     @Test

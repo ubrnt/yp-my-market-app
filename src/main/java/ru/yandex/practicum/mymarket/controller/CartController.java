@@ -2,10 +2,11 @@ package ru.yandex.practicum.mymarket.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.Action;
 import ru.yandex.practicum.mymarket.dto.CartDto;
@@ -27,8 +28,8 @@ public class CartController {
     }
 
     @PostMapping
-    public Mono<String> changeCount(@RequestParam Long id, @RequestParam Action action, Model model) {
-        return cartService.changeCount(id, action)
+    public Mono<String> changeCount(@ModelAttribute CartActionRequest request, Model model) {
+        return cartService.changeCount(request.itemId(), request.action())
                 .then(cartService.getCart())
                 .map(cart -> render(cart, model));
     }
@@ -37,5 +38,8 @@ public class CartController {
         model.addAttribute("items", cart.items());
         model.addAttribute("total", cart.total());
         return "cart";
+    }
+
+    public record CartActionRequest(@BindParam("id") Long itemId, Action action) {
     }
 }

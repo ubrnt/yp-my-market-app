@@ -2,7 +2,9 @@ package ru.yandex.practicum.mymarket.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -45,20 +47,15 @@ public class ItemController {
     }
 
     @PostMapping("/items")
-    public Mono<String> changeCountFromList(@RequestParam Long id,
-                                            @RequestParam Action action,
-                                            @RequestParam(defaultValue = "") String search,
-                                            @RequestParam(defaultValue = DEFAULT_SORT) SortType sort,
-                                            @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER) int pageNumber,
-                                            @RequestParam(defaultValue = DEFAULT_PAGE_SIZE) int pageSize) {
+    public Mono<String> changeCountFromList(@ModelAttribute ListActionRequest request) {
         String redirect = UriComponentsBuilder.fromPath("/items")
-                .queryParam("search", search)
-                .queryParam("sort", sort)
-                .queryParam("pageNumber", pageNumber)
-                .queryParam("pageSize", pageSize)
+                .queryParam("search", request.search())
+                .queryParam("sort", request.sort())
+                .queryParam("pageNumber", request.pageNumber())
+                .queryParam("pageSize", request.pageSize())
                 .toUriString();
 
-        return cartService.changeCount(id, action)
+        return cartService.changeCount(request.itemId(), request.action())
                 .thenReturn("redirect:" + redirect);
     }
 
@@ -73,13 +70,26 @@ public class ItemController {
 
     @PostMapping("/items/{id}")
     public Mono<String> changeCountFromCard(@PathVariable Long id,
-                                            @RequestParam Action action,
+                                            @ModelAttribute CardActionRequest request,
                                             Model model) {
-        return cartService.changeCount(id, action)
+        return cartService.changeCount(id, request.action())
                 .then(itemService.getItem(id))
                 .map(item -> {
                     model.addAttribute("item", item);
                     return "item";
                 });
+    }
+
+    public record ListActionRequest(
+            @BindParam("id") Long itemId,
+            Action action,
+            String search,
+            SortType sort,
+            int pageNumber,
+            int pageSize
+    ) {
+    }
+
+    public record CardActionRequest(Action action) {
     }
 }

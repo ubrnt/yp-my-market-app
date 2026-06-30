@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.Action;
 import ru.yandex.practicum.mymarket.dto.CartDto;
@@ -41,7 +42,9 @@ class CartControllerTest {
         when(cartService.changeCount(1L, Action.DELETE)).thenReturn(Mono.empty());
         when(cartService.getCart()).thenReturn(Mono.just(new CartDto(List.of(), 0L)));
 
-        webTestClient.post().uri("/cart/items?id=1&action=DELETE").exchange()
+        webTestClient.post().uri("/cart/items")
+                .body(BodyInserters.fromFormData("id", "1").with("action", "DELETE"))
+                .exchange()
                 .expectStatus().isOk();
 
         verify(cartService).changeCount(1L, Action.DELETE);

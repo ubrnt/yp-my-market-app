@@ -4,7 +4,9 @@ server:
 app:
   items-page:
     row-size: 3
-  images-base-path: images/
+  images:
+    url-prefix: images/
+    classpath-dir: images/
 
 spring:
   application:

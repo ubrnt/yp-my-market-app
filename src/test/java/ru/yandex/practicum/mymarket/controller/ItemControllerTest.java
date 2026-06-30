@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.Action;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
@@ -46,7 +47,14 @@ class ItemControllerTest {
     void changeCountFromList_redirectsToItems() {
         when(cartService.changeCount(1L, Action.PLUS)).thenReturn(Mono.empty());
 
-        webTestClient.post().uri("/items?id=1&action=PLUS").exchange()
+        webTestClient.post().uri("/items")
+                .body(BodyInserters.fromFormData("id", "1")
+                        .with("action", "PLUS")
+                        .with("search", "")
+                        .with("sort", "NO")
+                        .with("pageNumber", "1")
+                        .with("pageSize", "5"))
+                .exchange()
                 .expectStatus().is3xxRedirection()
                 .expectHeader().valueMatches("Location", "/items\\?.*");
 
@@ -69,7 +77,9 @@ class ItemControllerTest {
         when(itemService.getItem(1L))
                 .thenReturn(Mono.just(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 1)));
 
-        webTestClient.post().uri("/items/1?action=MINUS").exchange()
+        webTestClient.post().uri("/items/1")
+                .body(BodyInserters.fromFormData("action", "MINUS"))
+                .exchange()
                 .expectStatus().isOk()
                 .expectBody(String.class).value(html -> assertTrue(html.contains("Кепка")));
 

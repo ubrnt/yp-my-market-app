@@ -12,12 +12,12 @@ import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 @Component
 public class ItemMapper {
 
-    private final String imagesBasePath;
+    private final String imagesUrlPrefix;
     private final int rowSize;
 
-    public ItemMapper(@Value("${app.images-base-path}") String imagesBasePath,
+    public ItemMapper(@Value("${app.images.url-prefix}") String imagesUrlPrefix,
                       @Value("${app.items-page.row-size}") int rowSize) {
-        this.imagesBasePath = imagesBasePath;
+        this.imagesUrlPrefix = imagesUrlPrefix;
         this.rowSize = rowSize;
     }
 
@@ -26,7 +26,7 @@ public class ItemMapper {
                 row.id(),
                 row.title(),
                 row.description(),
-                imagesBasePath + row.id(),
+                imagesUrlPrefix + row.id(),
                 row.price(),
                 row.count());
     }
