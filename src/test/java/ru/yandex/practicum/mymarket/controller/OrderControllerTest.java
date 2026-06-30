@@ -13,6 +13,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.OrderDto;
 import ru.yandex.practicum.mymarket.dto.OrderItemDto;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.service.OrderService;
 
 @WebFluxTest(OrderController.class)
@@ -44,6 +45,16 @@ class OrderControllerTest {
         webTestClient.get().uri("/orders/7").exchange()
                 .expectStatus().isOk()
                 .expectBody(String.class).value(html -> assertTrue(html.contains("Заказ №7")));
+    }
+
+    @Test
+    void order_whenNotFound_returns404() {
+        when(orderService.getOrder(99L))
+                .thenReturn(Mono.error(new NotFoundException(NotFoundException.Resource.ORDER, 99L)));
+
+        webTestClient.get().uri("/orders/99").exchange()
+                .expectStatus().isNotFound()
+                .expectBody(String.class).value(html -> assertTrue(html.contains("Заказ не найден")));
     }
 
     @Test

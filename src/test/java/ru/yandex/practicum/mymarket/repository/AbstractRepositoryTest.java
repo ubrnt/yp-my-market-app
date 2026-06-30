@@ -10,7 +10,7 @@ import ru.yandex.practicum.mymarket.domain.Order;
 import ru.yandex.practicum.mymarket.domain.OrderItem;
 
 @DataR2dbcTest
-@ActiveProfiles("test")
+@ActiveProfiles("repo-test")
 abstract class AbstractRepositoryTest {
 
     @Autowired

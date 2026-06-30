@@ -22,7 +22,7 @@ import ru.yandex.practicum.mymarket.repository.ItemRepository;
 import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 
 @ExtendWith(MockitoExtension.class)
-class ItemServiceTest {
+class ItemServiceUnitTest {
 
     private static final int ROW_SIZE = 3;
 

@@ -22,7 +22,7 @@ import ru.yandex.practicum.mymarket.repository.CartItemRepository;
 import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 
 @ExtendWith(MockitoExtension.class)
-class CartServiceTest {
+class CartServiceUnitTest {
 
     @Mock
     CartItemRepository cartItemRepository;

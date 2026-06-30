@@ -1,0 +1,6 @@
+spring:
+  r2dbc:
+    url: r2dbc:h2:mem:///repotestdb?options=MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+  sql:
+    init:
+      data-locations: []

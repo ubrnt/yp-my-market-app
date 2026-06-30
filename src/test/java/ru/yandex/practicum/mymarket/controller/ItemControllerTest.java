@@ -18,6 +18,7 @@ import ru.yandex.practicum.mymarket.dto.Action;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto.PagingDto;
+import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.service.CartService;
 import ru.yandex.practicum.mymarket.service.ItemService;
 
@@ -84,5 +85,15 @@ class ItemControllerTest {
                 .expectBody(String.class).value(html -> assertTrue(html.contains("Кепка")));
 
         verify(cartService).changeCount(1L, Action.MINUS);
+    }
+
+    @Test
+    void item_whenNotFound_returns404() {
+        when(itemService.getItem(999L))
+                .thenReturn(Mono.error(new NotFoundException(NotFoundException.Resource.ITEM, 999L)));
+
+        webTestClient.get().uri("/items/999").exchange()
+                .expectStatus().isNotFound()
+                .expectBody(String.class).value(html -> assertTrue(html.contains("Товар не найден")));
     }
 }
