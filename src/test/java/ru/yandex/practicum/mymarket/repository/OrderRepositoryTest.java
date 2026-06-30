@@ -21,6 +21,7 @@ class OrderRepositoryTest extends AbstractRepositoryTest {
     @Test
     void findAllWithItems_joinsItemsAcrossOrders() {
         Item item = saveItem("Мяч", "круглый", 990L, "ball.png");
+
         Order order = saveOrder(1980L);
         saveOrderItem(order.getId(), item.getId(), 2);
 
@@ -39,9 +40,11 @@ class OrderRepositoryTest extends AbstractRepositoryTest {
     @Test
     void findByIdWithItems_returnsOnlyThatOrder() {
         Item item = saveItem("Мяч", "круглый", 990L, "ball.png");
+
         Order firstOrder = saveOrder(990L);
-        Order secondOrder = saveOrder(1980L);
         saveOrderItem(firstOrder.getId(), item.getId(), 1);
+
+        Order secondOrder = saveOrder(1980L);
         saveOrderItem(secondOrder.getId(), item.getId(), 2);
 
         StepVerifier.create(orderRepository.findByIdWithItems(firstOrder.getId()))

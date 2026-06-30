@@ -33,7 +33,6 @@ abstract class AbstractRepositoryTest {
 
     protected Item saveItem(String title, String description, long price, String imagePath) {
         Item item = new Item();
-
         item.setTitle(title);
         item.setDescription(description);
         item.setPrice(price);
@@ -44,7 +43,6 @@ abstract class AbstractRepositoryTest {
 
     protected CartItem saveCartItem(Long itemId, int count) {
         CartItem cartItem = new CartItem();
-
         cartItem.setItemId(itemId);
         cartItem.setCount(count);
 
@@ -53,7 +51,6 @@ abstract class AbstractRepositoryTest {
 
     protected Order saveOrder(long totalSum) {
         Order order = new Order();
-
         order.setTotalSum(totalSum);
 
         return orderRepository.save(order).block();
@@ -61,7 +58,6 @@ abstract class AbstractRepositoryTest {
 
     protected OrderItem saveOrderItem(Long orderId, Long itemId, int count) {
         OrderItem orderItem = new OrderItem();
-
         orderItem.setOrderId(orderId);
         orderItem.setItemId(itemId);
         orderItem.setCount(count);

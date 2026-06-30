@@ -55,6 +55,7 @@ public class OrderService {
                     }
 
                     long totalSum = rows.stream().mapToLong(row -> row.price() * row.count()).sum();
+
                     Order order = new Order();
                     order.setTotalSum(totalSum);
 

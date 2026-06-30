@@ -13,6 +13,7 @@ class OrderItemRepositoryTest extends AbstractRepositoryTest {
     @Test
     void save_thenFindById_returnsOrderItem() {
         Item item = saveItem("Товар", "Описание", 100L, "t.png");
+
         Order order = saveOrder(200L);
         OrderItem saved = saveOrderItem(order.getId(), item.getId(), 2);
 

@@ -50,6 +50,7 @@ public class CartService {
         CartItem cartItem = new CartItem();
         cartItem.setItemId(itemId);
         cartItem.setCount(1);
+
         return cartItemRepository.save(cartItem);
     }
 

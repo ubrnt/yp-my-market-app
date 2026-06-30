@@ -55,6 +55,7 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
     void findByIdWithCountInCart_returnsItemWithCartCount() {
         Item inCart = saveItem("В корзине", "опис", 100L, "a.png");
         Item notInCart = saveItem("Не в корзине", "опис", 200L, "b.png");
+
         saveCartItem(inCart.getId(), 4);
 
         StepVerifier.create(itemRepository.findByIdWithCountInCart(inCart.getId()))

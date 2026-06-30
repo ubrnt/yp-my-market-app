@@ -83,9 +83,11 @@ class OrderServiceTest {
         when(cartItemRepository.findAllWithItems()).thenReturn(Flux.just(
                 new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2),
                 new ItemDetailedRow(2L, "Ракетка", "о", "racket.png", 500L, 1)));
+
         Order savedOrder = new Order();
         savedOrder.setId(7L);
         when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(savedOrder));
+
         when(orderItemRepository.saveAll(anyIterable())).thenReturn(Flux.just(new OrderItem()));
         when(cartItemRepository.deleteAll()).thenReturn(Mono.empty());
 

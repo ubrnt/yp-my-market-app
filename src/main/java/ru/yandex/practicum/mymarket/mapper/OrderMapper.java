@@ -23,6 +23,7 @@ public class OrderMapper {
 
     public OrderDto toDto(List<OrderItemDetailedRow> orderRows) {
         OrderItemDetailedRow first = orderRows.getFirst();
+
         List<OrderItemDto> items = orderRows.stream()
                 .map(row -> new OrderItemDto(row.itemId(), row.title(), row.price(), row.count()))
                 .toList();
@@ -37,6 +38,7 @@ public class OrderMapper {
                     orderItem.setOrderId(orderId);
                     orderItem.setItemId(row.id());
                     orderItem.setCount(row.count());
+
                     return orderItem;
                 })
                 .toList();

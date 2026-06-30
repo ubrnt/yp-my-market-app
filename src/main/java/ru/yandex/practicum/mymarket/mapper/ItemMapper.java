@@ -40,10 +40,13 @@ public class ItemMapper {
 
         for (int from = 0; from < items.size(); from += rowSize) {
             int to = Math.min(from + rowSize, items.size());
+
             List<ItemDto> row = new ArrayList<>(items.subList(from, to));
+
             while (row.size() < rowSize) {
                 row.add(ItemDto.dummy());
             }
+
             rows.add(row);
         }
 
