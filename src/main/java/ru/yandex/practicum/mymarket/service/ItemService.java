@@ -1,5 +1,6 @@
 package ru.yandex.practicum.mymarket.service;
 
+import java.io.IOException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -56,6 +57,7 @@ public class ItemService {
         return itemRepository.findById(id)
                 .flatMap(item -> fromCallable(
                                 () -> new ClassPathResource(imagesClasspathDir + item.getImagePath()).getContentAsByteArray())
-                        .subscribeOn(boundedElastic()));
+                        .subscribeOn(boundedElastic())
+                        .onErrorResume(IOException.class, e -> Mono.empty()));
     }
 }

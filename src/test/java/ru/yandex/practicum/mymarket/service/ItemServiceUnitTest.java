@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.SortType;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
@@ -59,6 +60,27 @@ class ItemServiceUnitTest {
         StepVerifier.create(itemService.getItem(99L))
                 .expectError(NotFoundException.class)
                 .verify();
+    }
+
+    @Test
+    void getImage_returnsImageBytes() {
+        Item item = new Item();
+        item.setImagePath("black-cap.png");
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(item));
+
+        StepVerifier.create(itemService.getImage(1L))
+                .assertNext(bytes -> assertTrue(bytes.length > 0))
+                .verifyComplete();
+    }
+
+    @Test
+    void getImage_whenFileMissing_returnsEmpty() {
+        Item item = new Item();
+        item.setImagePath("does-not-exist.png");
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(item));
+
+        StepVerifier.create(itemService.getImage(1L))
+                .verifyComplete();
     }
 
     @Test
