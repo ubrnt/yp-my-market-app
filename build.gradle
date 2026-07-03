@@ -39,3 +39,9 @@ tasks.named('test') {
 tasks.named('jar') {
 	enabled = false
 }
+
+tasks.register('resolveDependencies') {
+	doLast {
+		configurations.matching { it.canBeResolved }.each { it.resolve() }
+	}
+}

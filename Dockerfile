@@ -2,7 +2,7 @@ FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 COPY gradle/ gradle/
 COPY gradlew settings.gradle build.gradle ./
-RUN ./gradlew --no-daemon dependencies
+RUN ./gradlew --no-daemon resolveDependencies
 COPY src/ src/
 RUN ./gradlew --no-daemon -x test clean bootJar
 
