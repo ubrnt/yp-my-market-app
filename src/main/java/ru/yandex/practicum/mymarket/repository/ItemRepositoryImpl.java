@@ -9,8 +9,19 @@ import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 
 public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
-    private static final String SEARCH_CLAUSE =
-            " WHERE lower(i.title) LIKE :search OR lower(i.description) LIKE :search";
+    private static final String SELECT_FOR_PAGE = """
+            SELECT i.id, i.title, i.description, i.image_path, i.price, COALESCE(ci.count, 0) AS count
+            FROM items i
+            LEFT JOIN cart_items ci ON ci.item_id = i.id
+            %s
+            ORDER BY %s
+            LIMIT :limit OFFSET :offset
+            """;
+
+    private static final String SEARCH_CLAUSE = """
+            WHERE lower(i.title) LIKE :search
+               OR lower(i.description) LIKE :search
+            """;
 
     private final DatabaseClient databaseClient;
 
@@ -21,13 +32,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     @Override
     public Flux<ItemDetailedRow> findForPage(String search, SortType sort, int limit, long offset) {
         boolean hasSearch = hasSearch(search);
-        String sql = "SELECT i.id, i.title, i.description, i.image_path, i.price, "
-                + "COALESCE(ci.count, 0) AS count "
-                + "FROM items i "
-                + "LEFT JOIN cart_items ci ON ci.item_id = i.id"
-                + (hasSearch ? SEARCH_CLAUSE : "")
-                + " ORDER BY " + orderBy(sort)
-                + " LIMIT :limit OFFSET :offset";
+        String sql = SELECT_FOR_PAGE.formatted(hasSearch ? SEARCH_CLAUSE : "", orderBy(sort));
 
         DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(sql)
                 .bind("limit", limit)
