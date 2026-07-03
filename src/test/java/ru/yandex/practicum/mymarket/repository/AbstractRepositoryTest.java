@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.r2dbc.test.autoconfigure.DataR2dbcTest;
 import org.springframework.test.context.ActiveProfiles;
+import reactor.test.StepVerifier;
 import ru.yandex.practicum.mymarket.domain.CartItem;
 import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.domain.Order;
@@ -24,11 +25,12 @@ abstract class AbstractRepositoryTest {
 
     @BeforeEach
     protected void cleanDatabase() {
-        orderItemRepository.deleteAll()
-                .then(cartItemRepository.deleteAll())
-                .then(orderRepository.deleteAll())
-                .then(itemRepository.deleteAll())
-                .block();
+        StepVerifier.create(
+                orderItemRepository.deleteAll()
+                        .then(cartItemRepository.deleteAll())
+                        .then(orderRepository.deleteAll())
+                        .then(itemRepository.deleteAll())
+        ).verifyComplete();
     }
 
     protected Item saveItem(String title, String description, long price, String imagePath) {

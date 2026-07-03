@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
+import reactor.test.StepVerifier;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
 import ru.yandex.practicum.mymarket.repository.ItemRepository;
 import ru.yandex.practicum.mymarket.repository.OrderItemRepository;
@@ -24,9 +25,10 @@ public abstract class AbstractIntegrationTest {
 
     @BeforeEach
     void cleanMutableData() {
-        orderItemRepository.deleteAll()
-                .then(cartItemRepository.deleteAll())
-                .then(orderRepository.deleteAll())
-                .block();
+        StepVerifier.create(
+                orderItemRepository.deleteAll()
+                        .then(cartItemRepository.deleteAll())
+                        .then(orderRepository.deleteAll())
+        ).verifyComplete();
     }
 }
