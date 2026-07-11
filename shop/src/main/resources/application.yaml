@@ -7,6 +7,9 @@ app:
   images:
     url-prefix: images/
     classpath-dir: images/
+  payment:
+    base-url: http://localhost:8081
+    account-id: 1
 
 spring:
   application:
