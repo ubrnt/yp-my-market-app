@@ -1,196 +1,145 @@
 package ru.yandex.practicum.mymarket.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static ru.yandex.practicum.mymarket.util.TestDataFactory.item;
-import static ru.yandex.practicum.mymarket.util.TestDataFactory.items;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 import ru.yandex.practicum.mymarket.domain.Item;
-import ru.yandex.practicum.mymarket.dto.ItemDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.SortType;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.ItemRepository;
+import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 
 @ExtendWith(MockitoExtension.class)
 class ItemServiceUnitTest {
 
-    private static final int ROW_SIZE = 2;
+    private static final int ROW_SIZE = 3;
 
     @Mock
-    private ItemRepository itemRepository;
+    ItemRepository itemRepository;
 
-    @Mock
-    private CartService cartService;
-
-    private ItemService service;
+    ItemService itemService;
 
     @BeforeEach
     void setUp() {
-        service = new ItemService(itemRepository, cartService, new ItemMapper(), ROW_SIZE);
-    }
-
-    @Test
-    void getItems_groupsByRowSize_andPadsLastRowWithStubs() {
-        when(itemRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(items(1, 2, 3, 4, 5)));
-        when(cartService.getCountByItemIds(any())).thenReturn(Map.of());
-
-        ItemsPageDto page = service.getItems(null, SortType.NO, 1, ROW_SIZE);
-
-        assertEquals(3, page.items().size());
-        page.items().forEach(row -> assertEquals(ROW_SIZE, row.size()));
-        assertEquals(5, count(page, dto -> !dto.isDummy()));
-        assertEquals(1, count(page, ItemDto::isDummy));
-    }
-
-    @Test
-    void getItems_blankSearch_usesFindAll() {
-        when(itemRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
-        when(cartService.getCountByItemIds(any())).thenReturn(Map.of());
-
-        service.getItems("  ", SortType.NO, 1, ROW_SIZE);
-
-        verify(itemRepository).findAll(any(Pageable.class));
-        verify(itemRepository, never()).search(any(), any());
-    }
-
-    @Test
-    void getItems_withSearch_usesSearch() {
-        when(itemRepository.search(eq("ball"), any())).thenReturn(new PageImpl<>(List.of()));
-        when(cartService.getCountByItemIds(any())).thenReturn(Map.of());
-
-        service.getItems("ball", SortType.NO, 1, ROW_SIZE);
-
-        verify(itemRepository).search(eq("ball"), any());
-        verify(itemRepository, never()).findAll(any(Pageable.class));
-    }
-
-    @Test
-    void getItems_buildsPageableWithSortAndZeroBasedPage() {
-        when(itemRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
-        when(cartService.getCountByItemIds(any())).thenReturn(Map.of());
-
-        service.getItems(null, SortType.PRICE, 2, ROW_SIZE);
-
-        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(itemRepository).findAll(captor.capture());
-        Pageable pageable = captor.getValue();
-        assertEquals(1, pageable.getPageNumber());
-        assertEquals(ROW_SIZE, pageable.getPageSize());
-        assertNotNull(pageable.getSort().getOrderFor("price"));
-    }
-
-    @Test
-    void paging_firstPage_hasNextButNoPrevious() {
-        when(itemRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(items(1, 2), PageRequest.of(0, 2), 6));
-        when(cartService.getCountByItemIds(any())).thenReturn(Map.of());
-
-        var paging = service.getItems(null, SortType.NO, 1, 2).paging();
-
-        assertEquals(1, paging.pageNumber());
-        assertEquals(2, paging.pageSize());
-        assertFalse(paging.hasPrevious());
-        assertTrue(paging.hasNext());
-    }
-
-    @Test
-    void paging_middlePage_hasPreviousAndNext() {
-        when(itemRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(items(3, 4), PageRequest.of(1, 2), 6));
-        when(cartService.getCountByItemIds(any())).thenReturn(Map.of());
-
-        var paging = service.getItems(null, SortType.NO, 2, 2).paging();
-
-        assertEquals(2, paging.pageNumber());
-        assertTrue(paging.hasPrevious());
-        assertTrue(paging.hasNext());
-    }
-
-    @Test
-    void paging_lastPage_hasPreviousButNoNext() {
-        when(itemRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(items(5, 6), PageRequest.of(2, 2), 6));
-        when(cartService.getCountByItemIds(any())).thenReturn(Map.of());
-
-        var paging = service.getItems(null, SortType.NO, 3, 2).paging();
-
-        assertEquals(3, paging.pageNumber());
-        assertTrue(paging.hasPrevious());
-        assertFalse(paging.hasNext());
-    }
-
-    @Test
-    void getItems_setsCountFromCart() {
-        when(itemRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(items(1, 2)));
-        when(cartService.getCountByItemIds(any())).thenReturn(Map.of(1L, 3));
-
-        ItemsPageDto page = service.getItems(null, SortType.NO, 1, ROW_SIZE);
-
-        Map<Long, Integer> byId = page.items().stream()
-                .flatMap(List::stream)
-                .filter(dto -> !dto.isDummy())
-                .collect(java.util.stream.Collectors.toMap(ItemDto::id, ItemDto::count));
-        assertEquals(3, byId.get(1L));
-        assertEquals(0, byId.get(2L));
+        itemService = new ItemService(itemRepository, new ItemMapper("images/", ROW_SIZE), "images/");
     }
 
     @Test
     void getItem_returnsDtoWithCartCountAndImgPath() {
-        Item item = item(7L);
-        when(itemRepository.findById(7L)).thenReturn(Optional.of(item));
-        when(cartService.getCount(7L)).thenReturn(2);
+        when(itemRepository.findByIdWithCountInCart(1L))
+                .thenReturn(Mono.just(new ItemDetailedRow(1L, "Мяч", "круглый", "ball.png", 990L, 2)));
 
-        ItemDto dto = service.getItem(7L);
-
-        assertEquals(7L, dto.id());
-        assertEquals("images/7", dto.imgPath());
-        assertEquals(2, dto.count());
+        StepVerifier.create(itemService.getItem(1L))
+                .assertNext(dto -> {
+                    assertEquals(1L, dto.id());
+                    assertEquals("Мяч", dto.title());
+                    assertEquals("images/1", dto.imgPath());
+                    assertEquals(990L, dto.price());
+                    assertEquals(2, dto.count());
+                })
+                .verifyComplete();
     }
 
     @Test
     void getItem_whenNotFound_throws() {
-        when(itemRepository.findById(99L)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.getItem(99L));
+        when(itemRepository.findByIdWithCountInCart(99L)).thenReturn(Mono.empty());
+
+        StepVerifier.create(itemService.getItem(99L))
+                .expectError(NotFoundException.class)
+                .verify();
     }
 
     @Test
-    void getImage_returnsBytesFromRepository() {
-        byte[] bytes = {1, 2, 3};
-        when(itemRepository.findImageById(7L)).thenReturn(bytes);
+    void getImage_returnsImageBytes() {
+        Item item = new Item();
+        item.setImagePath("black-cap.png");
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(item));
 
-        assertArrayEquals(bytes, service.getImage(7L));
+        StepVerifier.create(itemService.getImage(1L))
+                .assertNext(bytes -> assertTrue(bytes.length > 0))
+                .verifyComplete();
     }
 
-    private long count(ItemsPageDto page, java.util.function.Predicate<ItemDto> match) {
-        return page.items().stream()
-                .flatMap(List::stream)
-                .filter(match)
-                .count();
+    @Test
+    void getImage_whenFileMissing_returnsEmpty() {
+        Item item = new Item();
+        item.setImagePath("does-not-exist.png");
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(item));
+
+        StepVerifier.create(itemService.getImage(1L))
+                .verifyComplete();
     }
 
+    @Test
+    void getItems_groupsByRowSize_andPadsLastRow() {
+        when(itemRepository.findForPage(null, SortType.NO, 6, 0L))
+                .thenReturn(Flux.just(row(1), row(2), row(3), row(4)));
+
+        StepVerifier.create(itemService.getItems(null, SortType.NO, 1, 5))
+                .assertNext(page -> {
+                    assertEquals(2, page.items().size());
+                    assertEquals(3, page.items().get(0).size());
+                    assertFalse(page.items().get(0).get(0).isDummy());
+
+                    assertEquals(3, page.items().get(1).size());
+                    assertEquals(4L, page.items().get(1).get(0).id());
+                    assertTrue(page.items().get(1).get(1).isDummy());
+                    assertTrue(page.items().get(1).get(2).isDummy());
+
+                    ItemsPageDto.PagingDto paging = page.paging();
+                    assertEquals(5, paging.pageSize());
+                    assertEquals(1, paging.pageNumber());
+                    assertFalse(paging.hasPrevious());
+                    assertFalse(paging.hasNext());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void paging_middlePage_hasPreviousAndNext() {
+        when(itemRepository.findForPage(null, SortType.NO, 3, 2L))
+                .thenReturn(Flux.just(row(1), row(2), row(3)));
+
+        StepVerifier.create(itemService.getItems(null, SortType.NO, 2, 2))
+                .assertNext(page -> {
+                    long real = page.items().stream().flatMap(java.util.List::stream)
+                            .filter(item -> !item.isDummy()).count();
+                    assertEquals(2, real);
+
+                    ItemsPageDto.PagingDto paging = page.paging();
+                    assertTrue(paging.hasPrevious());
+                    assertTrue(paging.hasNext());
+                })
+                .verifyComplete();
+
+        verify(itemRepository).findForPage(null, SortType.NO, 3, 2L);
+    }
+
+    @Test
+    void getItems_forwardsSearchAndSort() {
+        when(itemRepository.findForPage("мяч", SortType.PRICE, 6, 0L)).thenReturn(Flux.empty());
+
+        StepVerifier.create(itemService.getItems("мяч", SortType.PRICE, 1, 5))
+                .assertNext(page -> assertTrue(page.items().isEmpty()))
+                .verifyComplete();
+
+        verify(itemRepository).findForPage("мяч", SortType.PRICE, 6, 0L);
+    }
+
+    private static ItemDetailedRow row(long id) {
+        return new ItemDetailedRow(id, "Товар " + id, "Описание", "img" + id + ".png", 100L * id, 0);
+    }
 }

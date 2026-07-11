@@ -1,19 +1,18 @@
 package ru.yandex.practicum.mymarket.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.domain.Item;
+import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 
-public interface ItemRepository extends JpaRepository<Item, Long> {
+public interface ItemRepository extends R2dbcRepository<Item, Long>, ItemRepositoryCustom {
 
-    @Query("select i from Item i "
-            + "where lower(i.title) like lower(concat('%', :search, '%')) "
-            + "or lower(i.description) like lower(concat('%', :search, '%'))")
-    Page<Item> search(@Param("search") String search, Pageable pageable);
-
-    @Query(value = "select image from items where id = :id", nativeQuery = true)
-    byte[] findImageById(@Param("id") Long id);
+    @Query("""
+            SELECT i.id, i.title, i.description, i.image_path, i.price, COALESCE(ci.count, 0) AS count
+            FROM items i
+            LEFT JOIN cart_items ci ON ci.item_id = i.id
+            WHERE i.id = :id
+            """)
+    Mono<ItemDetailedRow> findByIdWithCountInCart(Long id);
 }

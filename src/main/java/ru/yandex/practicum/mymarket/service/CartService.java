@@ -1,106 +1,72 @@
 package ru.yandex.practicum.mymarket.service;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.domain.CartItem;
-import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.dto.Action;
+import ru.yandex.practicum.mymarket.dto.CartDto;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
-import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
-import ru.yandex.practicum.mymarket.repository.ItemRepository;
 
 @Service
 public class CartService {
 
     private final CartItemRepository cartItemRepository;
-    private final ItemRepository itemRepository;
     private final ItemMapper itemMapper;
 
-    public CartService(CartItemRepository cartItemRepository,
-                       ItemRepository itemRepository,
-                       ItemMapper itemMapper) {
+    public CartService(CartItemRepository cartItemRepository, ItemMapper itemMapper) {
         this.cartItemRepository = cartItemRepository;
-        this.itemRepository = itemRepository;
         this.itemMapper = itemMapper;
     }
 
-    @Transactional(readOnly = true)
-    public List<ItemDto> getCartItems() {
-        return cartItemRepository.findAll().stream()
-                .map(cartItem -> itemMapper.toDto(cartItem.getItem(), cartItem.getCount()))
-                .toList();
+    public Mono<CartDto> getCart() {
+        return cartItemRepository.findAllWithItems()
+                .map(itemMapper::toDto)
+                .collectList()
+                .map(items -> new CartDto(items, total(items)));
     }
 
-    @Transactional(readOnly = true)
-    public long getTotal() {
-        return cartItemRepository.findAll().stream()
-                .mapToLong(cartItem -> cartItem.getItem().getPrice() * cartItem.getCount())
-                .sum();
+    public Mono<Void> changeCount(Long itemId, Action action) {
+        return switch (action) {
+            case PLUS -> increase(itemId);
+            case MINUS -> decrease(itemId);
+            case DELETE -> cartItemRepository.deleteByItemId(itemId);
+        };
     }
 
-    @Transactional(readOnly = true)
-    public int getCount(Long itemId) {
+    private Mono<Void> increase(Long itemId) {
         return cartItemRepository.findByItemId(itemId)
-                .map(CartItem::getCount)
-                .orElse(0);
+                .flatMap(cartItem -> {
+                    cartItem.setCount(cartItem.getCount() + 1);
+                    return cartItemRepository.save(cartItem);
+                })
+                .switchIfEmpty(Mono.defer(() -> addNewToCart(itemId)))
+                .then();
     }
 
-    @Transactional(readOnly = true)
-    public Map<Long, Integer> getCountByItemIds(Collection<Long> itemIds) {
-        if (itemIds.isEmpty()) {
-            return Map.of();
-        }
+    private Mono<CartItem> addNewToCart(Long itemId) {
+        CartItem cartItem = new CartItem();
+        cartItem.setItemId(itemId);
+        cartItem.setCount(1);
 
-        return cartItemRepository.findByItemIdIn(itemIds).stream()
-                .collect(Collectors.toMap(
-                        cartItem -> cartItem.getItem().getId(),
-                        CartItem::getCount));
+        return cartItemRepository.save(cartItem);
     }
 
-    @Transactional
-    public void changeCount(Long itemId, Action action) {
-        CartItem cartItem = cartItemRepository.findByItemId(itemId).orElse(null);
-        switch (action) {
-            case PLUS -> plus(itemId, cartItem);
-            case MINUS -> minus(cartItem);
-            case DELETE -> {
-                if (cartItem != null) {
-                    cartItemRepository.delete(cartItem);
-                }
-            }
-        }
+    private Mono<Void> decrease(Long itemId) {
+        return cartItemRepository.findByItemId(itemId)
+                .flatMap(cartItem -> {
+                    int newCount = cartItem.getCount() - 1;
+                    if (newCount <= 0) {
+                        return cartItemRepository.delete(cartItem);
+                    }
+                    cartItem.setCount(newCount);
+                    return cartItemRepository.save(cartItem).then();
+                });
     }
 
-    private void plus(Long itemId, CartItem cartItem) {
-        if (cartItem == null) {
-            Item item = itemRepository.findById(itemId)
-                    .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ITEM, itemId));
-            CartItem created = new CartItem();
-            created.setItem(item);
-            created.setCount(1);
-            cartItemRepository.save(created);
-        } else {
-            cartItem.setCount(cartItem.getCount() + 1);
-            cartItemRepository.save(cartItem);
-        }
-    }
-
-    private void minus(CartItem cartItem) {
-        if (cartItem == null) {
-            return;
-        }
-        int count = cartItem.getCount() - 1;
-        if (count <= 0) {
-            cartItemRepository.delete(cartItem);
-        } else {
-            cartItem.setCount(count);
-            cartItemRepository.save(cartItem);
-        }
+    private long total(List<ItemDto> items) {
+        return items.stream().mapToLong(item -> item.price() * item.count()).sum();
     }
 }

@@ -1,14 +1,23 @@
 package ru.yandex.practicum.mymarket.repository;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.domain.CartItem;
+import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
 
-public interface CartItemRepository extends JpaRepository<CartItem, Long> {
+public interface CartItemRepository extends R2dbcRepository<CartItem, Long> {
 
-    Optional<CartItem> findByItemId(Long itemId);
+    @Query("""
+            SELECT i.id, i.title, i.description, i.image_path, i.price, ci.count
+            FROM cart_items ci
+            JOIN items i ON i.id = ci.item_id
+            ORDER BY i.id
+            """)
+    Flux<ItemDetailedRow> findAllWithItems();
 
-    List<CartItem> findByItemIdIn(Collection<Long> itemIds);
+    Mono<CartItem> findByItemId(Long itemId);
+
+    Mono<Void> deleteByItemId(Long itemId);
 }

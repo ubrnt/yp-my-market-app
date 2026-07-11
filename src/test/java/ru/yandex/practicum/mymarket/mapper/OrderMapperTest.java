@@ -2,43 +2,70 @@ package ru.yandex.practicum.mymarket.mapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.mymarket.domain.Item;
-import ru.yandex.practicum.mymarket.domain.Order;
 import ru.yandex.practicum.mymarket.domain.OrderItem;
 import ru.yandex.practicum.mymarket.dto.OrderDto;
-import ru.yandex.practicum.mymarket.dto.OrderItemDto;
+import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
+import ru.yandex.practicum.mymarket.repository.projection.OrderItemDetailedRow;
 
 class OrderMapperTest {
 
-    private final OrderMapper mapper = new OrderMapper();
+    private final OrderMapper orderMapper = new OrderMapper();
 
     @Test
     void toDto_mapsOrderWithItems() {
-        Item item = new Item();
-        item.setId(5L);
-        item.setTitle("Зонт-трость");
-        item.setPrice(1490L);
+        List<OrderItemDetailedRow> rows = List.of(
+                new OrderItemDetailedRow(7L, 2970L, 1L, "Мяч", 990L, 2),
+                new OrderItemDetailedRow(7L, 2970L, 2L, "Ракетка", 990L, 1));
 
-        OrderItem orderItem = new OrderItem();
-        orderItem.setItem(item);
-        orderItem.setCount(2);
+        OrderDto dto = orderMapper.toDto(rows);
 
-        Order order = new Order();
-        order.setId(42L);
-        order.setTotalSum(2980L);
-        order.addItem(orderItem);
+        assertEquals(7L, dto.id());
+        assertEquals(2970L, dto.totalSum());
+        assertEquals(2, dto.items().size());
 
-        OrderDto dto = mapper.toDto(order);
+        assertEquals(1L, dto.items().get(0).id());
+        assertEquals("Мяч", dto.items().get(0).title());
+        assertEquals(990L, dto.items().get(0).price());
+        assertEquals(2, dto.items().get(0).count());
 
-        assertEquals(42L, dto.id());
-        assertEquals(2980L, dto.totalSum());
-        assertEquals(1, dto.items().size());
+        assertEquals(2L, dto.items().get(1).id());
+        assertEquals("Ракетка", dto.items().get(1).title());
+    }
 
-        OrderItemDto line = dto.items().get(0);
-        assertEquals(5L, line.id());
-        assertEquals("Зонт-трость", line.title());
-        assertEquals(1490L, line.price());
-        assertEquals(2, line.count());
+    @Test
+    void toDtoList_groupsRowsByOrder() {
+        List<OrderItemDetailedRow> rows = List.of(
+                new OrderItemDetailedRow(7L, 990L, 1L, "Мяч", 990L, 1),
+                new OrderItemDetailedRow(8L, 1480L, 1L, "Мяч", 990L, 1),
+                new OrderItemDetailedRow(8L, 1480L, 2L, "Ракетка", 490L, 1));
+
+        List<OrderDto> orders = orderMapper.toDtoList(rows);
+
+        assertEquals(2, orders.size());
+
+        assertEquals(7L, orders.get(0).id());
+        assertEquals(1, orders.get(0).items().size());
+
+        assertEquals(8L, orders.get(1).id());
+        assertEquals(1480L, orders.get(1).totalSum());
+        assertEquals(2, orders.get(1).items().size());
+    }
+
+    @Test
+    void toOrderItems_buildsEntitiesFromCartRows() {
+        List<ItemDetailedRow> cartRows = List.of(
+                new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2),
+                new ItemDetailedRow(2L, "Ракетка", "о", "racket.png", 500L, 1));
+
+        List<OrderItem> orderItems = orderMapper.toOrderItems(7L, cartRows);
+
+        assertEquals(2, orderItems.size());
+        assertEquals(7L, orderItems.get(0).getOrderId());
+        assertEquals(1L, orderItems.get(0).getItemId());
+        assertEquals(2, orderItems.get(0).getCount());
+        assertEquals(7L, orderItems.get(1).getOrderId());
+        assertEquals(2L, orderItems.get(1).getItemId());
     }
 }

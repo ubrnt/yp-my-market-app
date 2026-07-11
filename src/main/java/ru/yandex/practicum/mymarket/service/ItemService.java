@@ -1,16 +1,11 @@
 package ru.yandex.practicum.mymarket.service;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.mymarket.domain.Item;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto.PagingDto;
@@ -19,76 +14,50 @@ import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.ItemRepository;
 
+import static reactor.core.publisher.Mono.fromCallable;
+import static reactor.core.scheduler.Schedulers.boundedElastic;
+
 @Service
 public class ItemService {
 
     private final ItemRepository itemRepository;
-    private final CartService cartService;
     private final ItemMapper itemMapper;
-    private final int rowSize;
+    private final String imagesClasspathDir;
 
     public ItemService(ItemRepository itemRepository,
-                       CartService cartService,
                        ItemMapper itemMapper,
-                       @Value("${app.items-page.row-size}") int rowSize) {
+                       @Value("${app.images.classpath-dir}") String imagesClasspathDir) {
         this.itemRepository = itemRepository;
-        this.cartService = cartService;
         this.itemMapper = itemMapper;
-        this.rowSize = rowSize;
+        this.imagesClasspathDir = imagesClasspathDir;
     }
 
-    @Transactional(readOnly = true)
-    public ItemsPageDto getItems(String search, SortType sort, int pageNumber, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, toSort(sort));
-        Page<Item> page = (search == null || search.isBlank())
-                ? itemRepository.findAll(pageable)
-                : itemRepository.search(search, pageable);
+    public Mono<ItemsPageDto> getItems(String search, SortType sort, int pageNumber, int pageSize) {
+        long offset = (long) (pageNumber - 1) * pageSize;
 
-        List<Item> content = page.getContent();
-        List<Long> itemIds = content.stream().map(Item::getId).toList();
-        Map<Long, Integer> counts = cartService.getCountByItemIds(itemIds);
-        List<ItemDto> items = content.stream()
-                .map(item -> itemMapper.toDto(item, counts.getOrDefault(item.getId(), 0)))
-                .toList();
+        return itemRepository.findForPage(search, sort, pageSize + 1, offset)
+                .map(itemMapper::toDto)
+                .collectList()
+                .map(items -> {
+                    boolean hasNext = items.size() > pageSize;
+                    List<ItemDto> pageItems = hasNext ? items.subList(0, pageSize) : items;
+                    PagingDto paging = new PagingDto(pageSize, pageNumber, pageNumber > 1, hasNext);
 
-        PagingDto paging = new PagingDto(pageSize, pageNumber, page.hasPrevious(), page.hasNext());
-
-        return new ItemsPageDto(toRows(items), paging);
+                    return itemMapper.toPageDto(pageItems, paging);
+                });
     }
 
-    @Transactional(readOnly = true)
-    public ItemDto getItem(Long id) {
-        Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ITEM, id));
-        
-        return itemMapper.toDto(item, cartService.getCount(id));
+    public Mono<ItemDto> getItem(Long id) {
+        return itemRepository.findByIdWithCountInCart(id)
+                .map(itemMapper::toDto)
+                .switchIfEmpty(Mono.error(() -> new NotFoundException(NotFoundException.Resource.ITEM, id)));
     }
 
-    @Transactional(readOnly = true)
-    public byte[] getImage(Long id) {
-        return itemRepository.findImageById(id);
-    }
-
-    private Sort toSort(SortType sort) {
-        return switch (sort) {
-            case ALPHA -> Sort.by("title");
-            case PRICE -> Sort.by("price");
-            case NO -> Sort.unsorted();
-        };
-    }
-
-    private List<List<ItemDto>> toRows(List<ItemDto> items) {
-        List<List<ItemDto>> rows = new ArrayList<>();
-
-        for (int from = 0; from < items.size(); from += rowSize) {
-            int to = Math.min(from + rowSize, items.size());
-            List<ItemDto> row = new ArrayList<>(items.subList(from, to));
-            while (row.size() < rowSize) {
-                row.add(ItemDto.dummy());
-            }
-            rows.add(row);
-        }
-
-        return rows;
+    public Mono<byte[]> getImage(Long id) {
+        return itemRepository.findById(id)
+                .flatMap(item -> fromCallable(
+                                () -> new ClassPathResource(imagesClasspathDir + item.getImagePath()).getContentAsByteArray())
+                        .subscribeOn(boundedElastic())
+                        .onErrorResume(IOException.class, e -> Mono.empty()));
     }
 }

@@ -1,27 +1,27 @@
 package ru.yandex.practicum.mymarket.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "items")
+@Table("items")
 public class Item {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column("id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column("title")
     private String title;
 
+    @Column("description")
     private String description;
 
-    @Column(nullable = false)
+    @Column("price")
     private long price;
+
+    @Column("image_path")
+    private String imagePath;
 
     public Long getId() {
         return id;
@@ -53,5 +53,13 @@ public class Item {
 
     public void setPrice(long price) {
         this.price = price;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 }

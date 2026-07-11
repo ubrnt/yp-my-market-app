@@ -1,69 +1,68 @@
 package ru.yandex.practicum.mymarket.service;
 
-import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.mymarket.domain.CartItem;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.domain.Order;
-import ru.yandex.practicum.mymarket.domain.OrderItem;
 import ru.yandex.practicum.mymarket.dto.OrderDto;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.OrderMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
+import ru.yandex.practicum.mymarket.repository.OrderItemRepository;
 import ru.yandex.practicum.mymarket.repository.OrderRepository;
 
 @Service
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderMapper orderMapper;
 
     public OrderService(OrderRepository orderRepository,
+                        OrderItemRepository orderItemRepository,
                         CartItemRepository cartItemRepository,
                         OrderMapper orderMapper) {
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
         this.cartItemRepository = cartItemRepository;
         this.orderMapper = orderMapper;
     }
 
+    public Flux<OrderDto> getOrders() {
+        return orderRepository.findAllWithItems()
+                .collectList()
+                .map(orderMapper::toDtoList)
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Mono<OrderDto> getOrder(Long id) {
+        return orderRepository.findByIdWithItems(id)
+                .collectList()
+                .flatMap(rows -> rows.isEmpty()
+                        ? Mono.error(new NotFoundException(NotFoundException.Resource.ORDER, id))
+                        : Mono.just(orderMapper.toDto(rows)));
+    }
+
     @Transactional
-    public Long buy() {
-        List<CartItem> cartItems = cartItemRepository.findAll();
+    public Mono<Long> buy() {
+        return cartItemRepository.findAllWithItems()
+                .collectList()
+                .flatMap(rows -> {
+                    if (rows.isEmpty()) {
+                        return Mono.error(new IllegalStateException("Cart is empty"));
+                    }
 
-        if (cartItems.isEmpty()) {
-            throw new IllegalStateException("Cart is empty");
-        }
+                    long totalSum = rows.stream().mapToLong(row -> row.price() * row.count()).sum();
 
-        Order order = new Order();
-        long totalSum = 0;
-        for (CartItem cartItem : cartItems) {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setItem(cartItem.getItem());
-            orderItem.setCount(cartItem.getCount());
-            order.addItem(orderItem);
-            totalSum += cartItem.getItem().getPrice() * cartItem.getCount();
-        }
-        order.setTotalSum(totalSum);
+                    Order order = new Order();
+                    order.setTotalSum(totalSum);
 
-        Long orderId = orderRepository.save(order).getId();
-        cartItemRepository.deleteAll();
-
-        return orderId;
-    }
-
-    @Transactional(readOnly = true)
-    public List<OrderDto> getOrders() {
-        return orderRepository.findAll().stream()
-                .map(orderMapper::toDto)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public OrderDto getOrder(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(NotFoundException.Resource.ORDER, id));
-
-        return orderMapper.toDto(order);
+                    return orderRepository.save(order)
+                            .flatMap(saved -> orderItemRepository.saveAll(orderMapper.toOrderItems(saved.getId(), rows))
+                                    .then(cartItemRepository.deleteAll())
+                                    .thenReturn(saved.getId()));
+                });
     }
 }

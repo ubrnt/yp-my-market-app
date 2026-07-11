@@ -1,13 +1,13 @@
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-RUN ./mvnw -B -q dependency:go-offline
+COPY gradle/ gradle/
+COPY gradlew settings.gradle build.gradle ./
+RUN ./gradlew --no-daemon resolveDependencies
 COPY src/ src/
-RUN ./mvnw -B -q clean package -DskipTests
+RUN ./gradlew --no-daemon -x test clean bootJar
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.service.ItemService;
 
 @Controller
@@ -17,15 +18,11 @@ public class ImageController {
     }
 
     @GetMapping("/images/{id}")
-    public ResponseEntity<byte[]> image(@PathVariable Long id) {
-        byte[] image = itemService.getImage(id);
-
-        if (image == null || image.length == 0) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_PNG)
-                .body(image);
+    public Mono<ResponseEntity<byte[]>> image(@PathVariable Long id) {
+        return itemService.getImage(id)
+                .map(bytes -> ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_PNG)
+                        .body(bytes))
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }

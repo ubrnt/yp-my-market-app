@@ -3,44 +3,37 @@ package ru.yandex.practicum.mymarket.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import reactor.test.StepVerifier;
+import ru.yandex.practicum.mymarket.AbstractIntegrationTest;
 import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.dto.Action;
-import ru.yandex.practicum.mymarket.dto.OrderDto;
-import ru.yandex.practicum.mymarket.repository.ItemRepository;
 
-@SpringBootTest
-@Transactional
-class OrderServiceIntegrationTest {
+class OrderServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
-    private OrderService orderService;
-
+    CartService cartService;
     @Autowired
-    private CartService cartService;
-
-    @Autowired
-    private ItemRepository itemRepository;
+    OrderService orderService;
 
     @Test
-    void buy_persistsOrderFromCart_andClearsCart() {
-        List<Item> items = itemRepository.findAll();
-        Item a = items.get(0);
-        Item b = items.get(1);
-        cartService.changeCount(a.getId(), Action.PLUS);
-        cartService.changeCount(a.getId(), Action.PLUS);
-        cartService.changeCount(b.getId(), Action.PLUS);
+    void buy_createsOrderAndClearsCartAgainstRealDb() {
+        Item first = itemRepository.findAll().blockFirst();
 
-        Long orderId = orderService.buy();
+        StepVerifier.create(
+                cartService.changeCount(first.getId(), Action.PLUS)
+                        .then(cartService.changeCount(first.getId(), Action.PLUS))
+                        .then(orderService.buy())
+                        .flatMap(orderService::getOrder)
+        ).assertNext(order -> {
+            assertEquals(first.getPrice() * 2, order.totalSum());
+            assertEquals(1, order.items().size());
+            assertEquals(2, order.items().getFirst().count());
+        }).verifyComplete();
 
-        assertTrue(cartService.getCartItems().isEmpty());
-
-        OrderDto order = orderService.getOrder(orderId);
-        assertEquals(a.getPrice() * 2 + b.getPrice(), order.totalSum());
-        assertEquals(2, order.items().size());
+        StepVerifier.create(cartService.getCart())
+                .assertNext(cart -> assertTrue(cart.items().isEmpty()))
+                .verifyComplete();
     }
 }

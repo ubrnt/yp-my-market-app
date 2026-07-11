@@ -1,100 +1,112 @@
 package ru.yandex.practicum.mymarket.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.anyIterable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static ru.yandex.practicum.mymarket.util.TestDataFactory.cartItem;
-import static ru.yandex.practicum.mymarket.util.TestDataFactory.item;
-import static ru.yandex.practicum.mymarket.util.TestDataFactory.order;
-import static ru.yandex.practicum.mymarket.util.TestDataFactory.orderItem;
 
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 import ru.yandex.practicum.mymarket.domain.Order;
-import ru.yandex.practicum.mymarket.dto.OrderDto;
+import ru.yandex.practicum.mymarket.domain.OrderItem;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.OrderMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
+import ru.yandex.practicum.mymarket.repository.OrderItemRepository;
 import ru.yandex.practicum.mymarket.repository.OrderRepository;
+import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
+import ru.yandex.practicum.mymarket.repository.projection.OrderItemDetailedRow;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceUnitTest {
 
     @Mock
-    private OrderRepository orderRepository;
-
+    OrderRepository orderRepository;
     @Mock
-    private CartItemRepository cartItemRepository;
+    OrderItemRepository orderItemRepository;
+    @Mock
+    CartItemRepository cartItemRepository;
 
-    private OrderService service;
+    OrderService orderService;
 
     @BeforeEach
     void setUp() {
-        service = new OrderService(orderRepository, cartItemRepository, new OrderMapper());
+        orderService = new OrderService(orderRepository, orderItemRepository, cartItemRepository, new OrderMapper());
     }
 
     @Test
-    void buy_buildsOrderFromCart_clearsCart_returnsId() {
-        when(cartItemRepository.findAll()).thenReturn(List.of(
-                cartItem(item(1L, 990L, "Кепка"), 2),
-                cartItem(item(2L, 1990L, "Мяч"), 1)));
-        when(orderRepository.save(any())).thenAnswer(invocation -> {
-            Order order = invocation.getArgument(0);
-            order.setId(42L);
-            return order;
-        });
+    void getOrders_mapsRowsToDtos() {
+        when(orderRepository.findAllWithItems()).thenReturn(Flux.just(
+                new OrderItemDetailedRow(7L, 990L, 1L, "Мяч", 990L, 1),
+                new OrderItemDetailedRow(8L, 500L, 2L, "Ракетка", 500L, 1)));
 
-        Long orderId = service.buy();
-
-        assertEquals(42L, orderId);
-
-        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
-        verify(orderRepository).save(captor.capture());
-        Order saved = captor.getValue();
-        assertEquals(990L * 2 + 1990L, saved.getTotalSum());
-        assertEquals(2, saved.getItems().size());
-
-        verify(cartItemRepository).deleteAll();
+        StepVerifier.create(orderService.getOrders())
+                .assertNext(order -> assertEquals(7L, order.id()))
+                .assertNext(order -> assertEquals(8L, order.id()))
+                .verifyComplete();
     }
 
     @Test
-    void buy_emptyCart_throws_andDoesNotPersist() {
-        when(cartItemRepository.findAll()).thenReturn(List.of());
+    void getOrder_returnsOrderWithItems() {
+        when(orderRepository.findByIdWithItems(7L)).thenReturn(Flux.just(
+                new OrderItemDetailedRow(7L, 1480L, 1L, "Мяч", 990L, 1),
+                new OrderItemDetailedRow(7L, 1480L, 2L, "Ракетка", 490L, 1)));
 
-        assertThrows(IllegalStateException.class, () -> service.buy());
-
-        verify(orderRepository, never()).save(any());
-        verify(cartItemRepository, never()).deleteAll();
-    }
-
-    @Test
-    void getOrders_mapsOrdersToDto() {
-        Order order = order(7L, 2980L, orderItem(item(5L, 1490L, "Зонт"), 2));
-        when(orderRepository.findAll()).thenReturn(List.of(order));
-
-        List<OrderDto> orders = service.getOrders();
-
-        assertEquals(1, orders.size());
-        OrderDto dto = orders.get(0);
-        assertEquals(7L, dto.id());
-        assertEquals(2980L, dto.totalSum());
-        assertEquals(1, dto.items().size());
-        assertEquals("Зонт", dto.items().get(0).title());
+        StepVerifier.create(orderService.getOrder(7L))
+                .assertNext(order -> {
+                    assertEquals(7L, order.id());
+                    assertEquals(1480L, order.totalSum());
+                    assertEquals(2, order.items().size());
+                })
+                .verifyComplete();
     }
 
     @Test
     void getOrder_whenNotFound_throws() {
-        when(orderRepository.findById(9L)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.getOrder(9L));
+        when(orderRepository.findByIdWithItems(99L)).thenReturn(Flux.empty());
+
+        StepVerifier.create(orderService.getOrder(99L))
+                .expectError(NotFoundException.class)
+                .verify();
     }
 
+    @Test
+    void buy_createsOrderFromCart_andClearsCart() {
+        when(cartItemRepository.findAllWithItems()).thenReturn(Flux.just(
+                new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2),
+                new ItemDetailedRow(2L, "Ракетка", "о", "racket.png", 500L, 1)));
+
+        Order savedOrder = new Order();
+        savedOrder.setId(7L);
+        when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(savedOrder));
+
+        when(orderItemRepository.saveAll(anyIterable())).thenReturn(Flux.just(new OrderItem()));
+        when(cartItemRepository.deleteAll()).thenReturn(Mono.empty());
+
+        StepVerifier.create(orderService.buy())
+                .expectNext(7L)
+                .verifyComplete();
+
+        ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(orderCaptor.capture());
+        assertEquals(2480L, orderCaptor.getValue().getTotalSum());
+        verify(cartItemRepository).deleteAll();
+    }
+
+    @Test
+    void buy_whenCartEmpty_throws() {
+        when(cartItemRepository.findAllWithItems()).thenReturn(Flux.empty());
+
+        StepVerifier.create(orderService.buy())
+                .expectError(IllegalStateException.class)
+                .verify();
+    }
 }

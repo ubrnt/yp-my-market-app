@@ -1,43 +1,44 @@
 package ru.yandex.practicum.mymarket.controller;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.service.ItemService;
 
-@WebMvcTest(ImageController.class)
+@WebFluxTest(ImageController.class)
 class ImageControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    WebTestClient webTestClient;
 
     @MockitoBean
-    private ItemService itemService;
+    ItemService itemService;
 
     @Test
-    void image_returnsBytesWithPngContentType() throws Exception {
-        byte[] bytes = {1, 2, 3};
-        when(itemService.getImage(1L)).thenReturn(bytes);
+    void image_returnsPngBytes() {
+        when(itemService.getImage(1L)).thenReturn(Mono.just(new byte[]{1, 2, 3, 4}));
 
-        mockMvc.perform(get("/images/1"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.IMAGE_PNG))
-                .andExpect(content().bytes(bytes));
+        webTestClient.get().uri("/images/1").exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.IMAGE_PNG)
+                .expectBody().consumeWith(result -> {
+                    byte[] body = result.getResponseBody();
+                    assertTrue(body != null && body.length > 0);
+                });
     }
 
     @Test
-    void image_whenMissing_returnsNotFound() throws Exception {
-        when(itemService.getImage(2L)).thenReturn(null);
+    void image_whenItemNotFound_returnsNotFound() {
+        when(itemService.getImage(99L)).thenReturn(Mono.empty());
 
-        mockMvc.perform(get("/images/2"))
-                .andExpect(status().isNotFound());
+        webTestClient.get().uri("/images/99").exchange()
+                .expectStatus().isNotFound();
     }
 }

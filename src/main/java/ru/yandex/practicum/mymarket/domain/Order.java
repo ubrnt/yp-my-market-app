@@ -1,34 +1,18 @@
 package ru.yandex.practicum.mymarket.domain;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "orders")
+@Table("orders")
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column("id")
     private Long id;
 
-    @Column(name = "total_sum", nullable = false)
+    @Column("total_sum")
     private long totalSum;
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items = new ArrayList<>();
-
-    public void addItem(OrderItem orderItem) {
-        orderItem.setOrder(this);
-        items.add(orderItem);
-    }
 
     public Long getId() {
         return id;
@@ -44,13 +28,5 @@ public class Order {
 
     public void setTotalSum(long totalSum) {
         this.totalSum = totalSum;
-    }
-
-    public List<OrderItem> getItems() {
-        return items;
-    }
-
-    public void setItems(List<OrderItem> items) {
-        this.items = items;
     }
 }
