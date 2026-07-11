@@ -26,7 +26,8 @@ openApiGenerate {
 	configOptions = [
 		reactive         : 'true',
 		interfaceOnly    : 'true',
-		useSpringBoot3   : 'true',
+		useSpringBoot4   : 'true',
+		useJackson3      : 'true',
 		openApiNullable  : 'false',
 		hideGenerationTimestamp: 'true',
 		documentationProvider: 'none',
