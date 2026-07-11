@@ -25,6 +25,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BalanceResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /accounts/{accountId}/payment:
     post:
       operationId: makePayment
@@ -49,6 +55,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Insufficient funds
           content:
@@ -85,7 +97,13 @@ components:
     ErrorResponse:
       type: object
       required:
+        - code
         - message
       properties:
+        code:
+          type: string
+          enum:
+            - INSUFFICIENT_FUNDS
+            - ACCOUNT_NOT_FOUND
         message:
           type: string
