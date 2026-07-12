@@ -85,6 +85,14 @@ Stop and remove:
 docker-compose down
 ```
 
+View logs (follow, `Ctrl+C` to stop):
+
+```bash
+docker-compose logs -f shop              
+docker-compose logs -f payment-service   
+docker-compose logs -f                   #both apps
+```
+
 ### Locally, service by service
 
 Defaults already point at `localhost`, so only start the pieces:
