@@ -5,12 +5,12 @@ import io.r2dbc.spi.RowMetadata;
 import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;
 import ru.yandex.practicum.mymarket.dto.SortType;
-import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
+import ru.yandex.practicum.mymarket.repository.projection.ItemCountRow;
 
 public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
-    private static final String SELECT_FOR_PAGE = """
-            SELECT i.id, i.title, i.description, i.image_path, i.price, COALESCE(ci.count, 0) AS count
+    private static final String SELECT_PAGE_IDS = """
+            SELECT i.id, COALESCE(ci.count, 0) AS count
             FROM items i
             LEFT JOIN cart_items ci ON ci.item_id = i.id
             %s
@@ -30,9 +30,9 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     }
 
     @Override
-    public Flux<ItemDetailedRow> findForPage(String search, SortType sort, int limit, long offset) {
+    public Flux<ItemCountRow> findPageIdsWithCount(String search, SortType sort, int limit, long offset) {
         boolean hasSearch = hasSearch(search);
-        String sql = SELECT_FOR_PAGE.formatted(hasSearch ? SEARCH_CLAUSE : "", orderBy(sort));
+        String sql = SELECT_PAGE_IDS.formatted(hasSearch ? SEARCH_CLAUSE : "", orderBy(sort));
 
         DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(sql)
                 .bind("limit", limit)
@@ -42,17 +42,15 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
             spec = spec.bind("search", pattern(search));
         }
 
-        return spec.map(this::toItemDetailedRow).all();
+        return spec.map(this::toItemCountRow).all();
     }
 
-    private ItemDetailedRow toItemDetailedRow(Row row, RowMetadata metadata) {
-        return new ItemDetailedRow(
+    private ItemCountRow toItemCountRow(Row row, RowMetadata metadata) {
+        Integer count = row.get("count", Integer.class);
+
+        return new ItemCountRow(
                 row.get("id", Long.class),
-                row.get("title", String.class),
-                row.get("description", String.class),
-                row.get("image_path", String.class),
-                row.get("price", Long.class),
-                row.get("count", Integer.class));
+                count == null ? 0 : count);
     }
 
     private String orderBy(SortType sort) {

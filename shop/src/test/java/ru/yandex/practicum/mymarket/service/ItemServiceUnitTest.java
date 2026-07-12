@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,13 +15,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import ru.yandex.practicum.mymarket.cache.RedisItemProvider;
 import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.SortType;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.ItemRepository;
-import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
+import ru.yandex.practicum.mymarket.repository.projection.ItemCountRow;
 
 @ExtendWith(MockitoExtension.class)
 class ItemServiceUnitTest {
@@ -30,17 +32,20 @@ class ItemServiceUnitTest {
     @Mock
     ItemRepository itemRepository;
 
+    @Mock
+    RedisItemProvider itemProvider;
+
     ItemService itemService;
 
     @BeforeEach
     void setUp() {
-        itemService = new ItemService(itemRepository, new ItemMapper("images/", ROW_SIZE), "images/");
+        itemService = new ItemService(itemRepository, itemProvider, new ItemMapper("images/", ROW_SIZE), "images/");
     }
 
     @Test
     void getItem_returnsDtoWithCartCountAndImgPath() {
-        when(itemRepository.findByIdWithCountInCart(1L))
-                .thenReturn(Mono.just(new ItemDetailedRow(1L, "Мяч", "круглый", "ball.png", 990L, 2)));
+        when(itemProvider.get(1L)).thenReturn(Mono.just(item(1L, "Мяч", 990L)));
+        when(itemRepository.countInCart(1L)).thenReturn(Mono.just(2));
 
         StepVerifier.create(itemService.getItem(1L))
                 .assertNext(dto -> {
@@ -54,8 +59,18 @@ class ItemServiceUnitTest {
     }
 
     @Test
+    void getItem_whenNotInCart_countIsZero() {
+        when(itemProvider.get(1L)).thenReturn(Mono.just(item(1L, "Мяч", 990L)));
+        when(itemRepository.countInCart(1L)).thenReturn(Mono.empty());
+
+        StepVerifier.create(itemService.getItem(1L))
+                .assertNext(dto -> assertEquals(0, dto.count()))
+                .verifyComplete();
+    }
+
+    @Test
     void getItem_whenNotFound_throws() {
-        when(itemRepository.findByIdWithCountInCart(99L)).thenReturn(Mono.empty());
+        when(itemProvider.get(99L)).thenReturn(Mono.empty());
 
         StepVerifier.create(itemService.getItem(99L))
                 .expectError(NotFoundException.class)
@@ -85,8 +100,10 @@ class ItemServiceUnitTest {
 
     @Test
     void getItems_groupsByRowSize_andPadsLastRow() {
-        when(itemRepository.findForPage(null, SortType.NO, 6, 0L))
-                .thenReturn(Flux.just(row(1), row(2), row(3), row(4)));
+        when(itemRepository.findPageIdsWithCount(null, SortType.NO, 6, 0L))
+                .thenReturn(Flux.just(countRow(1), countRow(2), countRow(3), countRow(4)));
+        when(itemProvider.getAll(List.of(1L, 2L, 3L, 4L)))
+                .thenReturn(Flux.just(item(1), item(2), item(3), item(4)));
 
         StepVerifier.create(itemService.getItems(null, SortType.NO, 1, 5))
                 .assertNext(page -> {
@@ -110,8 +127,10 @@ class ItemServiceUnitTest {
 
     @Test
     void paging_middlePage_hasPreviousAndNext() {
-        when(itemRepository.findForPage(null, SortType.NO, 3, 2L))
-                .thenReturn(Flux.just(row(1), row(2), row(3)));
+        when(itemRepository.findPageIdsWithCount(null, SortType.NO, 3, 2L))
+                .thenReturn(Flux.just(countRow(1), countRow(2), countRow(3)));
+        when(itemProvider.getAll(List.of(1L, 2L)))
+                .thenReturn(Flux.just(item(1), item(2)));
 
         StepVerifier.create(itemService.getItems(null, SortType.NO, 2, 2))
                 .assertNext(page -> {
@@ -125,21 +144,36 @@ class ItemServiceUnitTest {
                 })
                 .verifyComplete();
 
-        verify(itemRepository).findForPage(null, SortType.NO, 3, 2L);
+        verify(itemRepository).findPageIdsWithCount(null, SortType.NO, 3, 2L);
     }
 
     @Test
     void getItems_forwardsSearchAndSort() {
-        when(itemRepository.findForPage("мяч", SortType.PRICE, 6, 0L)).thenReturn(Flux.empty());
+        when(itemRepository.findPageIdsWithCount("мяч", SortType.PRICE, 6, 0L)).thenReturn(Flux.empty());
+        when(itemProvider.getAll(List.of())).thenReturn(Flux.empty());
 
         StepVerifier.create(itemService.getItems("мяч", SortType.PRICE, 1, 5))
                 .assertNext(page -> assertTrue(page.items().isEmpty()))
                 .verifyComplete();
 
-        verify(itemRepository).findForPage("мяч", SortType.PRICE, 6, 0L);
+        verify(itemRepository).findPageIdsWithCount("мяч", SortType.PRICE, 6, 0L);
     }
 
-    private static ItemDetailedRow row(long id) {
-        return new ItemDetailedRow(id, "Товар " + id, "Описание", "img" + id + ".png", 100L * id, 0);
+    private static ItemCountRow countRow(long id) {
+        return new ItemCountRow(id, 0);
+    }
+
+    private static Item item(long id) {
+        return item(id, "Товар " + id, 100L * id);
+    }
+
+    private static Item item(long id, String title, long price) {
+        Item item = new Item();
+        item.setId(id);
+        item.setTitle(title);
+        item.setDescription("Описание");
+        item.setImagePath("img" + id + ".png");
+        item.setPrice(price);
+        return item;
     }
 }

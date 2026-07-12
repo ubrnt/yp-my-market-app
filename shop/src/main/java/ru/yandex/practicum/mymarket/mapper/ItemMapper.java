@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.ItemsPageDto.PagingDto;
@@ -29,6 +30,16 @@ public class ItemMapper {
                 imagesUrlPrefix + row.id(),
                 row.price(),
                 row.count());
+    }
+
+    public ItemDto toDto(Item item, int count) {
+        return new ItemDto(
+                item.getId(),
+                item.getTitle(),
+                item.getDescription(),
+                imagesUrlPrefix + item.getId(),
+                item.getPrice(),
+                count);
     }
 
     public ItemsPageDto toPageDto(List<ItemDto> items, PagingDto paging) {
