@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,12 +16,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import ru.yandex.practicum.mymarket.cache.RedisItemProvider;
 import ru.yandex.practicum.mymarket.client.PaymentServiceClient;
 import ru.yandex.practicum.mymarket.domain.CartItem;
+import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.dto.Action;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
-import ru.yandex.practicum.mymarket.repository.projection.ItemDetailedRow;
+import ru.yandex.practicum.mymarket.repository.projection.ItemCountRow;
 
 @ExtendWith(MockitoExtension.class)
 class CartServiceUnitTest {
@@ -29,20 +32,23 @@ class CartServiceUnitTest {
     CartItemRepository cartItemRepository;
     @Mock
     PaymentServiceClient paymentServiceClient;
+    @Mock
+    RedisItemProvider redisItemProvider;
 
     CartService cartService;
 
     @BeforeEach
     void setUp() {
-        cartService = new CartService(cartItemRepository, new ItemMapper("images/", 3), paymentServiceClient);
+        cartService = new CartService(cartItemRepository, new ItemMapper("images/", 3),
+                paymentServiceClient, redisItemProvider);
     }
 
     @Test
-    void getCart_mapsItemsAndComputesTotal() {
-        when(cartItemRepository.findAllWithItems())
-                .thenReturn(Flux.just(
-                        new ItemDetailedRow(1L, "Мяч", "круглый", "ball.png", 990L, 2),
-                        new ItemDetailedRow(2L, "Ракетка", "для тенниса", "racket.png", 1990L, 1)));
+    void getCart_mapsItemsFromProviderAndComputesTotal() {
+        when(cartItemRepository.findAllIdsCount())
+                .thenReturn(Flux.just(new ItemCountRow(1L, 2), new ItemCountRow(2L, 1)));
+        when(redisItemProvider.getAll(List.of(1L, 2L)))
+                .thenReturn(Flux.just(item(1L, "Мяч", 990L), item(2L, "Ракетка", 1990L)));
 
         StepVerifier.create(cartService.getCart())
                 .assertNext(cart -> {
@@ -122,5 +128,17 @@ class CartServiceUnitTest {
         cartItem.setCount(count);
 
         return cartItem;
+    }
+
+    private static Item item(long id, String title, long price) {
+        Item item = new Item();
+
+        item.setId(id);
+        item.setTitle(title);
+        item.setDescription("desc");
+        item.setImagePath("img.png");
+        item.setPrice(price);
+
+        return item;
     }
 }

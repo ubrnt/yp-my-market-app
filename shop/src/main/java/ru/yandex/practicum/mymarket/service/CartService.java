@@ -1,8 +1,12 @@
 package ru.yandex.practicum.mymarket.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import ru.yandex.practicum.mymarket.cache.RedisItemProvider;
 import ru.yandex.practicum.mymarket.client.PaymentServiceClient;
 import ru.yandex.practicum.mymarket.domain.CartItem;
 import ru.yandex.practicum.mymarket.dto.Action;
@@ -10,6 +14,8 @@ import ru.yandex.practicum.mymarket.dto.CartDto;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
+import ru.yandex.practicum.mymarket.repository.projection.ItemCountRow;
+
 
 @Service
 public class CartService {
@@ -18,18 +24,28 @@ public class CartService {
     private final ItemMapper itemMapper;
     private final PaymentServiceClient paymentServiceClient;
 
+    private final RedisItemProvider redisItemProvider;
+
     public CartService(CartItemRepository cartItemRepository, ItemMapper itemMapper,
-                       PaymentServiceClient paymentServiceClient) {
+                       PaymentServiceClient paymentServiceClient, RedisItemProvider redisItemProvider) {
         this.cartItemRepository = cartItemRepository;
         this.itemMapper = itemMapper;
         this.paymentServiceClient = paymentServiceClient;
+        this.redisItemProvider = redisItemProvider;
     }
 
     public Mono<CartDto> getCart() {
-        return cartItemRepository.findAllWithItems()
-                .map(itemMapper::toDto)
-                .collectList()
-                .map(items -> new CartDto(items, total(items)));
+        return cartItemRepository.findAllIdsCount()
+                .collectList().flatMap(idCounts -> {
+                    List<Long> ids = idCounts.stream().map(ItemCountRow::id).toList();
+                    Map<Long, Integer> counts = idCounts.stream()
+                            .collect(Collectors.toMap(ItemCountRow::id, ItemCountRow::count));
+
+                    return redisItemProvider.getAll(ids)
+                            .map(it -> itemMapper.toDto(it , counts.getOrDefault(it.getId(), 0)))
+                            .collectList()
+                            .map(items -> new CartDto(items, total(items)));
+                });
     }
 
     public Mono<CheckoutState> checkoutState(long total) {
