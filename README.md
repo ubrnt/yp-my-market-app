@@ -107,22 +107,30 @@ Integration tests use Testcontainers, so Docker must be running.
 
 ### `shop`
 
-- **Unit** (Mockito): `RedisItemProviderUnitTest`, `ItemServiceUnitTest`,
+- **Unit**: `RedisItemProviderUnitTest`, `ItemServiceUnitTest`,
   `CartServiceUnitTest`, `OrderServiceUnitTest`, `PaymentServiceClientUnitTest`,
   `ItemMapperTest`, `OrderMapperTest`.
-- **Repositories** (`@DataR2dbcTest`): `ItemRepositoryTest`, `CartItemRepositoryTest`,
+- **Repositories**: `ItemRepositoryTest`, `CartItemRepositoryTest`,
   `OrderRepositoryTest`, `OrderItemRepositoryTest`.
-- **Controllers** (`@WebFluxTest` + `WebTestClient`): `ItemControllerTest`,
+- **Controllers**: `ItemControllerTest`,
   `CartControllerTest`, `OrderControllerTest`, `ImageControllerTest`.
-- **Integration** (`@SpringBootTest`, real R2DBC + Testcontainers Redis):
-  `RedisItemProviderIntegrationTest`, `ItemServiceIntegrationTest`,
-  `CartServiceIntegrationTest`, `OrderServiceIntegrationTest`, `ShopFlowIntegrationTest`.
+- **Integration**:
+  - `RedisItemProviderIntegrationTest`: item details come from Redis, missing ones from the
+    DB, id order kept.
+  - `ItemServiceIntegrationTest`: catalog and item page read through the cache.
+  - `CartServiceIntegrationTest`: cart changes and total against the real DB.
+  - `OrderServiceIntegrationTest`: buy saves the order and clears the cart (payment mocked).
+  - `ShopFlowIntegrationTest`: full flow, add to cart, buy, order appears, cart cleared (payment mocked).
+  - `PaymentServiceClientIntegrationTest`: client calls a Testcontainers Microcks mock over
+    HTTP and maps `200`/`404`/`422` to results (plain JUnit, not `@SpringBootTest`).
 
 ### `payment-service`
 
-- **Unit** (Mockito): `PaymentServiceUnitTest`.
-- **Repositories** (`@DataR2dbcTest`): `AccountRepositoryTest`.
-- **Integration** (`@SpringBootTest` + `WebTestClient`): `AccountsControllerIntegrationTest`.
+- **Unit**: `PaymentServiceUnitTest`.
+- **Repositories**: `AccountRepositoryTest`.
+- **Integration**:
+  - `AccountsControllerIntegrationTest`: endpoints return `200`, `404` (unknown account),
+    `422` (insufficient funds), `400` (invalid amount).
 
 ## API
 
