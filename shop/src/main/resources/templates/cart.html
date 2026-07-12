@@ -49,9 +49,19 @@
                 <form action="/buy" method="post" th:if="${!items.isEmpty()}">
                     <div class="hstack gap-3">
                         <h2 th:text="'Итого: '+${total}+' руб.'"/>
-                        <button class="btn btn-warning ms-auto">Купить</button>
+                        <button class="btn btn-warning ms-auto"
+                                th:disabled="${checkoutState.name() != 'OK'}">Купить</button>
                     </div>
                 </form>
+                <div class="alert alert-warning mt-2" th:if="${checkoutState.name() == 'INSUFFICIENT_FUNDS'}">
+                    Недостаточно средств на счёте
+                </div>
+                <div class="alert alert-danger mt-2" th:if="${checkoutState.name() == 'ACCOUNT_NOT_FOUND'}">
+                    Счёт не найден
+                </div>
+                <div class="alert alert-danger mt-2" th:if="${checkoutState.name() == 'UNAVAILABLE'}">
+                    Сервис оплаты недоступен
+                </div>
             </div>
         </div>
     </div>

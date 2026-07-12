@@ -24,20 +24,23 @@ public class CartController {
 
     @GetMapping
     public Mono<String> cart(Model model) {
-        return cartService.getCart().map(cart -> render(cart, model));
+        return cartService.getCart().flatMap(cart -> render(cart, model));
     }
 
     @PostMapping
     public Mono<String> changeCount(@ModelAttribute CartActionRequest request, Model model) {
         return cartService.changeCount(request.itemId(), request.action())
                 .then(cartService.getCart())
-                .map(cart -> render(cart, model));
+                .flatMap(cart -> render(cart, model));
     }
 
-    private String render(CartDto cart, Model model) {
-        model.addAttribute("items", cart.items());
-        model.addAttribute("total", cart.total());
-        return "cart";
+    private Mono<String> render(CartDto cart, Model model) {
+        return cartService.checkoutState(cart.total()).map(state -> {
+            model.addAttribute("items", cart.items());
+            model.addAttribute("total", cart.total());
+            model.addAttribute("checkoutState", state);
+            return "cart";
+        });
     }
 
     public record CartActionRequest(@BindParam("id") Long itemId, Action action) {

@@ -58,11 +58,20 @@ class OrderControllerTest {
     }
 
     @Test
-    void buy_redirectsToNewOrder() {
+    void buy_whenSuccess_redirectsToNewOrder() {
         when(orderService.buy()).thenReturn(Mono.just(7L));
 
         webTestClient.post().uri("/buy").exchange()
                 .expectStatus().is3xxRedirection()
                 .expectHeader().valueEquals("Location", "/orders/7?newOrder=true");
+    }
+
+    @Test
+    void buy_whenPaymentFails_redirectsToCart() {
+        when(orderService.buy()).thenReturn(Mono.empty());
+
+        webTestClient.post().uri("/buy").exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueEquals("Location", "/cart/items");
     }
 }

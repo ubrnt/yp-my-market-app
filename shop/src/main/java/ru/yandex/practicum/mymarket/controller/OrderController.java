@@ -43,6 +43,7 @@ public class OrderController {
     @PostMapping("/buy")
     public Mono<String> buy() {
         return orderService.buy()
-                .map(orderId -> "redirect:/orders/" + orderId + "?newOrder=true");
+                .map(orderId -> "redirect:/orders/" + orderId + "?newOrder=true")
+                .defaultIfEmpty("redirect:/cart/items");
     }
 }
