@@ -82,4 +82,12 @@ class AccountsControllerIntegrationTest {
                 .exchange()
                 .expectStatus().isNotFound();
     }
+
+    @Test
+    void makePayment_whenAmountNotPositive_returns400() {
+        webTestClient.post().uri("/accounts/1/payment")
+                .bodyValue(new PaymentRequest(0L))
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
 }
