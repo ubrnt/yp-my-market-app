@@ -3,6 +3,7 @@ package ru.yandex.practicum.mymarket.service;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import ru.yandex.practicum.mymarket.client.PaymentServiceClient;
 import ru.yandex.practicum.mymarket.domain.CartItem;
 import ru.yandex.practicum.mymarket.dto.Action;
 import ru.yandex.practicum.mymarket.dto.CartDto;
@@ -15,10 +16,13 @@ public class CartService {
 
     private final CartItemRepository cartItemRepository;
     private final ItemMapper itemMapper;
+    private final PaymentServiceClient paymentServiceClient;
 
-    public CartService(CartItemRepository cartItemRepository, ItemMapper itemMapper) {
+    public CartService(CartItemRepository cartItemRepository, ItemMapper itemMapper,
+                       PaymentServiceClient paymentServiceClient) {
         this.cartItemRepository = cartItemRepository;
         this.itemMapper = itemMapper;
+        this.paymentServiceClient = paymentServiceClient;
     }
 
     public Mono<CartDto> getCart() {
@@ -26,6 +30,14 @@ public class CartService {
                 .map(itemMapper::toDto)
                 .collectList()
                 .map(items -> new CartDto(items, total(items)));
+    }
+
+    public Mono<CheckoutState> checkoutState(long total) {
+        return paymentServiceClient.getBalance().map(result -> switch (result.status()) {
+            case AVAILABLE -> result.balance() >= total ? CheckoutState.OK : CheckoutState.INSUFFICIENT_FUNDS;
+            case ACCOUNT_NOT_FOUND -> CheckoutState.ACCOUNT_NOT_FOUND;
+            case UNAVAILABLE -> CheckoutState.UNAVAILABLE;
+        });
     }
 
     public Mono<Void> changeCount(Long itemId, Action action) {
@@ -68,5 +80,12 @@ public class CartService {
 
     private long total(List<ItemDto> items) {
         return items.stream().mapToLong(item -> item.price() * item.count()).sum();
+    }
+
+    public enum CheckoutState {
+        OK,
+        INSUFFICIENT_FUNDS,
+        ACCOUNT_NOT_FOUND,
+        UNAVAILABLE
     }
 }

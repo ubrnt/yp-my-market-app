@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import ru.yandex.practicum.mymarket.client.PaymentServiceClient;
 import ru.yandex.practicum.mymarket.domain.CartItem;
 import ru.yandex.practicum.mymarket.dto.Action;
 import ru.yandex.practicum.mymarket.mapper.ItemMapper;
@@ -26,12 +27,14 @@ class CartServiceUnitTest {
 
     @Mock
     CartItemRepository cartItemRepository;
+    @Mock
+    PaymentServiceClient paymentServiceClient;
 
     CartService cartService;
 
     @BeforeEach
     void setUp() {
-        cartService = new CartService(cartItemRepository, new ItemMapper("images/", 3));
+        cartService = new CartService(cartItemRepository, new ItemMapper("images/", 3), paymentServiceClient);
     }
 
     @Test

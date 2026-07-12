@@ -3,6 +3,7 @@ package ru.yandex.practicum.mymarket.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyIterable;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,9 +13,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import ru.yandex.practicum.mymarket.client.PaymentServiceClient;
+import ru.yandex.practicum.mymarket.client.PaymentServiceClient.PaymentResult;
 import ru.yandex.practicum.mymarket.domain.Order;
 import ru.yandex.practicum.mymarket.domain.OrderItem;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
@@ -34,12 +38,17 @@ class OrderServiceUnitTest {
     OrderItemRepository orderItemRepository;
     @Mock
     CartItemRepository cartItemRepository;
+    @Mock
+    PaymentServiceClient paymentServiceClient;
+    @Mock
+    TransactionalOperator transactionalOperator;
 
     OrderService orderService;
 
     @BeforeEach
     void setUp() {
-        orderService = new OrderService(orderRepository, orderItemRepository, cartItemRepository, new OrderMapper());
+        orderService = new OrderService(orderRepository, orderItemRepository, cartItemRepository,
+                new OrderMapper(), paymentServiceClient, transactionalOperator);
     }
 
     @Test
@@ -79,15 +88,16 @@ class OrderServiceUnitTest {
     }
 
     @Test
-    void buy_createsOrderFromCart_andClearsCart() {
+    void buy_whenPaymentSucceeds_createsOrderAndClearsCart() {
         when(cartItemRepository.findAllWithItems()).thenReturn(Flux.just(
                 new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2),
                 new ItemDetailedRow(2L, "Ракетка", "о", "racket.png", 500L, 1)));
+        when(paymentServiceClient.pay(2480L)).thenReturn(Mono.just(PaymentResult.SUCCESS));
+        when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Order savedOrder = new Order();
         savedOrder.setId(7L);
         when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(savedOrder));
-
         when(orderItemRepository.saveAll(anyIterable())).thenReturn(Flux.just(new OrderItem()));
         when(cartItemRepository.deleteAll()).thenReturn(Mono.empty());
 
@@ -99,6 +109,31 @@ class OrderServiceUnitTest {
         verify(orderRepository).save(orderCaptor.capture());
         assertEquals(2480L, orderCaptor.getValue().getTotalSum());
         verify(cartItemRepository).deleteAll();
+    }
+
+    @Test
+    void buy_whenInsufficientFunds_doesNotCreateOrder() {
+        when(cartItemRepository.findAllWithItems()).thenReturn(Flux.just(
+                new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2)));
+        when(paymentServiceClient.pay(1980L)).thenReturn(Mono.just(PaymentResult.INSUFFICIENT_FUNDS));
+
+        StepVerifier.create(orderService.buy())
+                .verifyComplete();
+
+        verify(orderRepository, never()).save(any());
+        verify(cartItemRepository, never()).deleteAll();
+    }
+
+    @Test
+    void buy_whenPaymentUnavailable_doesNotCreateOrder() {
+        when(cartItemRepository.findAllWithItems()).thenReturn(Flux.just(
+                new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2)));
+        when(paymentServiceClient.pay(1980L)).thenReturn(Mono.just(PaymentResult.UNAVAILABLE));
+
+        StepVerifier.create(orderService.buy())
+                .verifyComplete();
+
+        verify(orderRepository, never()).save(any());
     }
 
     @Test
