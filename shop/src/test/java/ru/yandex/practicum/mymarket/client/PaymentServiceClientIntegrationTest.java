@@ -6,6 +6,7 @@ import io.github.microcks.testcontainers.MicrocksContainer;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.utility.DockerImageName;
@@ -21,7 +22,8 @@ class PaymentServiceClientIntegrationTest {
 
     @BeforeAll
     static void startMock() throws Exception {
-        microcks = new MicrocksContainer(DockerImageName.parse("quay.io/microcks/microcks-uber:1.11.0"));
+        microcks = new MicrocksContainer(DockerImageName.parse("quay.io/microcks/microcks-uber:1.11.0"))
+                .withStartupTimeout(Duration.ofSeconds(180));
         microcks.start();
         microcks.importAsMainArtifact(new File(System.getProperty("payment.openapi.spec")));
         microcks.importAsSecondaryArtifact(resource("payment-api-examples.yaml"));
