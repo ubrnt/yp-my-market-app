@@ -4,6 +4,8 @@ plugins {
 	id 'org.openapi.generator' version '7.23.0' apply false
 }
 
+ext.paymentApiSpec = "$rootDir/openapi/payment-api.yaml"
+
 subprojects {
 	apply plugin: 'java'
 	apply plugin: 'io.spring.dependency-management'

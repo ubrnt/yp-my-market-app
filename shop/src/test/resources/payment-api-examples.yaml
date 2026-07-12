@@ -1,0 +1,48 @@
+apiVersion: mocks.microcks.io/v1alpha1
+kind: APIExamples
+metadata:
+  name: Payment Service API
+  version: 1.0.0
+operations:
+  "GET /accounts/{accountId}/balance":
+    account-known:
+      request:
+        parameters:
+          accountId: "1"
+      response:
+        status: "200"
+        mediaType: application/json
+        body: |-
+          {"balance": 100000}
+    account-unknown:
+      request:
+        parameters:
+          accountId: "999"
+      response:
+        status: "404"
+        mediaType: application/json
+        body: |-
+          {"code": "ACCOUNT_NOT_FOUND", "message": "Account 999 not found"}
+  "POST /accounts/{accountId}/payment":
+    account-funded:
+      request:
+        parameters:
+          accountId: "1"
+        body: |-
+          {"amount": 1000}
+      response:
+        status: "200"
+        mediaType: application/json
+        body: |-
+          {"balance": 99000}
+    account-broke:
+      request:
+        parameters:
+          accountId: "2"
+        body: |-
+          {"amount": 1000}
+      response:
+        status: "422"
+        mediaType: application/json
+        body: |-
+          {"code": "INSUFFICIENT_FUNDS", "message": "Insufficient funds on account 2"}

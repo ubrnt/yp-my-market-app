@@ -56,16 +56,30 @@ class RedisItemProviderIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void getAll_keepsIdsOrder_servingCachedAndLoadingMissing() {
-        Flux<Item> fromProvider = itemRepository.findAll().collectList().flatMapMany(items -> {
+        Mono<Void> flow = itemRepository.findAll().collectList().flatMap(items -> {
             List<Long> ids = items.subList(0, 3).stream().map(Item::getId).toList();
             String firstKey = appName + ":item:" + ids.getFirst();
             return itemRedisTemplate.opsForValue().set(firstKey, cached(ids.getFirst()))
-                    .thenMany(itemProvider.getAll(ids));
+                    .then(itemProvider.getAll(ids).collectList())
+                    .doOnNext(result -> {
+                        assertEquals(ids, result.stream().map(Item::getId).toList());
+                        assertEquals("CACHED", result.getFirst().getTitle());
+                    })
+                    .then();
+        });
+
+        StepVerifier.create(flow).verifyComplete();
+    }
+
+    @Test
+    void getAll_whenNothingCached_loadsAllFromDb() {
+        Flux<Item> fromProvider = itemRepository.findAll().collectList().flatMapMany(items -> {
+            List<Long> ids = items.subList(0, 3).stream().map(Item::getId).toList();
+            return itemProvider.getAll(ids);
         });
 
         StepVerifier.create(fromProvider)
-                .assertNext(first -> assertEquals("CACHED", first.getTitle()))
-                .expectNextCount(2)
+                .expectNextCount(3)
                 .verifyComplete();
     }
 

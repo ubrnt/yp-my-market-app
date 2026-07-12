@@ -17,13 +17,14 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-data-r2dbc-test'
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.testcontainers:testcontainers:1.20.4'
+	testImplementation 'io.github.microcks:microcks-testcontainers:0.4.4'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 openApiGenerate {
 	generatorName = 'java'
 	library = 'webclient'
-	inputSpec = "$rootDir/openapi/payment-api.yaml"
+	inputSpec = rootProject.paymentApiSpec
 	outputDir = layout.buildDirectory.dir('generated/openapi').get().toString()
 	apiPackage = 'ru.yandex.practicum.mymarket.payment.api'
 	modelPackage = 'ru.yandex.practicum.mymarket.payment.dto'
@@ -42,6 +43,7 @@ openApiGenerate {
 
 tasks.named('test') {
 	environment 'TESTCONTAINERS_RYUK_DISABLED', 'true'
+	systemProperty 'payment.openapi.spec', rootProject.paymentApiSpec
 }
 
 sourceSets.main.java.srcDir "${openApiGenerate.outputDir.get()}/src/main/java"
