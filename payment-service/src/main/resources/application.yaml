@@ -1,0 +1,13 @@
+\server:
+  port: 8081
+
+spring:
+  application:
+    name: payment-service
+  r2dbc:
+    url: r2dbc:h2:mem:///payments-db?options=MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always

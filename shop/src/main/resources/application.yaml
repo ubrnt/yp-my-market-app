@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+app:
+  items-page:
+    row-size: 3
+  images:
+    url-prefix: images/
+    classpath-dir: images/
+  payment:
+    base-url: http://localhost:8081
+    account-id: 1
+  cache:
+    items:
+      ttl: 120s
+
+spring:
+  application:
+    name: my-market-app
+  r2dbc:
+    url: r2dbc:h2:mem:///testdb?options=MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  sql:
+    init:
+      mode: always
