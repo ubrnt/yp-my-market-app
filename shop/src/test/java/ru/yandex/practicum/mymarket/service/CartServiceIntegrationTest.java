@@ -22,10 +22,10 @@ class CartServiceIntegrationTest extends AbstractIntegrationTest {
         Item second = items.get(1);
 
         StepVerifier.create(
-                cartService.changeCount(first.getId(), Action.PLUS)
-                        .then(cartService.changeCount(first.getId(), Action.PLUS))
-                        .then(cartService.changeCount(second.getId(), Action.PLUS))
-                        .then(cartService.getCart())
+                cartService.changeCount(1L, first.getId(), Action.PLUS)
+                        .then(cartService.changeCount(1L, first.getId(), Action.PLUS))
+                        .then(cartService.changeCount(1L, second.getId(), Action.PLUS))
+                        .then(cartService.getCart(1L))
         ).assertNext(cart -> {
             assertEquals(2, cart.items().size());
             assertEquals(first.getPrice() * 2 + second.getPrice(), cart.total());

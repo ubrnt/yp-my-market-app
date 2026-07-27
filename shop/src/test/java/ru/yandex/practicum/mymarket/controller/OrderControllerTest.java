@@ -62,7 +62,7 @@ class OrderControllerTest {
 
     @Test
     void buy_whenSuccess_redirectsToNewOrder() {
-        when(orderService.buy()).thenReturn(Mono.just(7L));
+        when(orderService.buy(1L)).thenReturn(Mono.just(7L));
 
         webTestClient.post().uri("/buy").exchange()
                 .expectStatus().is3xxRedirection()
@@ -71,7 +71,7 @@ class OrderControllerTest {
 
     @Test
     void buy_whenPaymentFails_redirectsToCart() {
-        when(orderService.buy()).thenReturn(Mono.empty());
+        when(orderService.buy(1L)).thenReturn(Mono.empty());
 
         webTestClient.post().uri("/buy").exchange()
                 .expectStatus().is3xxRedirection()

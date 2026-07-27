@@ -9,6 +9,7 @@ import ru.yandex.practicum.mymarket.domain.CartItem;
 import ru.yandex.practicum.mymarket.domain.Item;
 import ru.yandex.practicum.mymarket.domain.Order;
 import ru.yandex.practicum.mymarket.domain.OrderItem;
+import ru.yandex.practicum.mymarket.domain.User;
 
 @DataR2dbcTest
 @ActiveProfiles("repo-test")
@@ -22,6 +23,10 @@ abstract class AbstractRepositoryTest {
     protected OrderRepository orderRepository;
     @Autowired
     protected OrderItemRepository orderItemRepository;
+    @Autowired
+    protected UserRepository userRepository;
+
+    protected Long testUserId;
 
     @BeforeEach
     protected void cleanDatabase() {
@@ -30,7 +35,19 @@ abstract class AbstractRepositoryTest {
                         .then(cartItemRepository.deleteAll())
                         .then(orderRepository.deleteAll())
                         .then(itemRepository.deleteAll())
+                        .then(userRepository.deleteAll())
         ).verifyComplete();
+
+        testUserId = saveUser("testuser").getId();
+    }
+
+    protected User saveUser(String username) {
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword("{noop}password");
+        user.setAccountId(1L);
+
+        return userRepository.save(user).block();
     }
 
     protected Item saveItem(String title, String description, long price, String imagePath) {
@@ -45,6 +62,7 @@ abstract class AbstractRepositoryTest {
 
     protected CartItem saveCartItem(Long itemId, int count) {
         CartItem cartItem = new CartItem();
+        cartItem.setUserId(testUserId);
         cartItem.setItemId(itemId);
         cartItem.setCount(count);
 

@@ -22,9 +22,9 @@ class OrderServiceIntegrationTest extends AbstractIntegrationTest {
         Item first = itemRepository.findAll().blockFirst();
 
         StepVerifier.create(
-                cartService.changeCount(first.getId(), Action.PLUS)
-                        .then(cartService.changeCount(first.getId(), Action.PLUS))
-                        .then(orderService.buy())
+                cartService.changeCount(1L, first.getId(), Action.PLUS)
+                        .then(cartService.changeCount(1L, first.getId(), Action.PLUS))
+                        .then(orderService.buy(1L))
                         .flatMap(orderService::getOrder)
         ).assertNext(order -> {
             assertEquals(first.getPrice() * 2, order.totalSum());
@@ -32,7 +32,7 @@ class OrderServiceIntegrationTest extends AbstractIntegrationTest {
             assertEquals(2, order.items().getFirst().count());
         }).verifyComplete();
 
-        StepVerifier.create(cartService.getCart())
+        StepVerifier.create(cartService.getCart(1L))
                 .assertNext(cart -> assertTrue(cart.items().isEmpty()))
                 .verifyComplete();
     }

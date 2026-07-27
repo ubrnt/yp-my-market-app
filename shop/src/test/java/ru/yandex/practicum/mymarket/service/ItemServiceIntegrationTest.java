@@ -20,7 +20,7 @@ class ItemServiceIntegrationTest extends AbstractIntegrationTest {
     void getItem_returnsMappedItemAgainstRealDb() {
         Item first = itemRepository.findAll().blockFirst();
 
-        ItemDto dto = itemService.getItem(first.getId()).block();
+        ItemDto dto = itemService.getItem(first.getId(), 1L).block();
 
         assertEquals(first.getId(), dto.id());
         assertEquals(first.getTitle(), dto.title());
@@ -30,7 +30,7 @@ class ItemServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void getItems_buildsPagedRowsAgainstRealDb() {
-        StepVerifier.create(itemService.getItems(null, SortType.NO, 1, 5))
+        StepVerifier.create(itemService.getItems(1L, null, SortType.NO, 1, 5))
                 .assertNext(page -> {
                     assertFalse(page.items().isEmpty());
                     page.items().forEach(row -> assertEquals(3, row.size()));

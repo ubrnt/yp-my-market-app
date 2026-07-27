@@ -40,7 +40,7 @@ class ItemControllerTest {
     void items_returnsItemsViewWithModel() {
         ItemDto item = new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 0);
         ItemsPageDto page = new ItemsPageDto(List.of(List.of(item)), new PagingDto(5, 1, false, true));
-        when(itemService.getItems(any(), any(), anyInt(), anyInt())).thenReturn(Mono.just(page));
+        when(itemService.getItems(1L, any(), any(), anyInt(), anyInt())).thenReturn(Mono.just(page));
 
         webTestClient.get().uri("/items").exchange()
                 .expectStatus().isOk()
@@ -49,7 +49,7 @@ class ItemControllerTest {
 
     @Test
     void changeCountFromList_redirectsToItems() {
-        when(cartService.changeCount(1L, Action.PLUS)).thenReturn(Mono.empty());
+        when(cartService.changeCount(1L, 1L, Action.PLUS)).thenReturn(Mono.empty());
 
         webTestClient.post().uri("/items")
                 .body(BodyInserters.fromFormData("id", "1")
@@ -62,12 +62,12 @@ class ItemControllerTest {
                 .expectStatus().is3xxRedirection()
                 .expectHeader().valueMatches("Location", "/items\\?.*");
 
-        verify(cartService).changeCount(1L, Action.PLUS);
+        verify(cartService).changeCount(1L, 1L, Action.PLUS);
     }
 
     @Test
     void item_returnsItemView() {
-        when(itemService.getItem(1L))
+        when(itemService.getItem(1L, 1L))
                 .thenReturn(Mono.just(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 2)));
 
         webTestClient.get().uri("/items/1").exchange()
@@ -77,8 +77,8 @@ class ItemControllerTest {
 
     @Test
     void changeCountFromCard_rerendersItemView() {
-        when(cartService.changeCount(1L, Action.MINUS)).thenReturn(Mono.empty());
-        when(itemService.getItem(1L))
+        when(cartService.changeCount(1L, 1L, Action.MINUS)).thenReturn(Mono.empty());
+        when(itemService.getItem(1L, 1L))
                 .thenReturn(Mono.just(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 1)));
 
         webTestClient.post().uri("/items/1")
@@ -87,12 +87,12 @@ class ItemControllerTest {
                 .expectStatus().isOk()
                 .expectBody(String.class).value(html -> assertTrue(html.contains("Кепка")));
 
-        verify(cartService).changeCount(1L, Action.MINUS);
+        verify(cartService).changeCount(1L, 1L, Action.MINUS);
     }
 
     @Test
     void item_whenNotFound_returns404() {
-        when(itemService.getItem(999L))
+        when(itemService.getItem(1L, 999L))
                 .thenReturn(Mono.error(new NotFoundException(NotFoundException.Resource.ITEM, 999L)));
 
         webTestClient.get().uri("/items/999").exchange()

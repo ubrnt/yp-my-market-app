@@ -34,7 +34,7 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
         Item a = saveItem("А", "", 100L, "a.png");
         Item b = saveItem("Б", "", 200L, "b.png");
 
-        StepVerifier.create(itemRepository.findPageIdsWithCount(null, SortType.PRICE, 10, 0).collectList())
+        StepVerifier.create(itemRepository.findPageIdsWithCount(testUserId, null, SortType.PRICE, 10, 0).collectList())
                 .assertNext(rows -> {
                     assertEquals(3, rows.size());
                     assertEquals(a.getId(), rows.get(0).id());
@@ -50,7 +50,7 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
         Item souvenir = saveItem("Сувенир", "внутри маленький мяч", 50L, "2.png");
         Item racket = saveItem("Ракетка", "для тенниса", 200L, "3.png");
 
-        StepVerifier.create(itemRepository.findPageIdsWithCount("мяч", SortType.NO, 10, 0).collectList())
+        StepVerifier.create(itemRepository.findPageIdsWithCount(testUserId, "мяч", SortType.NO, 10, 0).collectList())
                 .assertNext(rows -> {
                     assertEquals(2, rows.size());
                     Set<Long> ids = rows.stream().map(ItemCountRow::id).collect(Collectors.toSet());
@@ -68,11 +68,11 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
 
         saveCartItem(inCart.getId(), 4);
 
-        StepVerifier.create(itemRepository.countInCart(inCart.getId()))
+        StepVerifier.create(itemRepository.countInCart(inCart.getId(), testUserId))
                 .assertNext(count -> assertEquals(4, count))
                 .verifyComplete();
 
-        StepVerifier.create(itemRepository.countInCart(notInCart.getId()))
+        StepVerifier.create(itemRepository.countInCart(notInCart.getId(), testUserId))
                 .verifyComplete();
     }
 
@@ -82,7 +82,7 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
         Item notInCart = saveItem("Не в корзине", "", 200L, "b.png");
         saveCartItem(inCart.getId(), 2);
 
-        StepVerifier.create(itemRepository.findPageIdsWithCount(null, SortType.NO, 10, 0).collectList())
+        StepVerifier.create(itemRepository.findPageIdsWithCount(testUserId, null, SortType.NO, 10, 0).collectList())
                 .assertNext(rows -> {
                     assertEquals(2, rows.size());
                     assertEquals(inCart.getId(), rows.get(0).id());

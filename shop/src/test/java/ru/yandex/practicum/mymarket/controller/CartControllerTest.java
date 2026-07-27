@@ -41,7 +41,7 @@ class CartControllerTest {
     void cart_returnsCartViewWithItems() {
         CartDto cart = new CartDto(
                 List.of(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 2)), 1980L);
-        when(cartService.getCart()).thenReturn(Mono.just(cart));
+        when(cartService.getCart(1L)).thenReturn(Mono.just(cart));
 
         webTestClient.get().uri("/cart/items").exchange()
                 .expectStatus().isOk()
@@ -52,7 +52,7 @@ class CartControllerTest {
     void cart_whenNotEnoughBalance_showsInsufficientMessage() {
         CartDto cart = new CartDto(
                 List.of(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 2)), 1980L);
-        when(cartService.getCart()).thenReturn(Mono.just(cart));
+        when(cartService.getCart(1L)).thenReturn(Mono.just(cart));
         when(cartService.checkoutState(anyLong())).thenReturn(Mono.just(CheckoutState.INSUFFICIENT_FUNDS));
 
         webTestClient.get().uri("/cart/items").exchange()
@@ -64,7 +64,7 @@ class CartControllerTest {
     void cart_whenAccountNotFound_showsAccountNotFoundMessage() {
         CartDto cart = new CartDto(
                 List.of(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 2)), 1980L);
-        when(cartService.getCart()).thenReturn(Mono.just(cart));
+        when(cartService.getCart(1L)).thenReturn(Mono.just(cart));
         when(cartService.checkoutState(anyLong())).thenReturn(Mono.just(CheckoutState.ACCOUNT_NOT_FOUND));
 
         webTestClient.get().uri("/cart/items").exchange()
@@ -76,7 +76,7 @@ class CartControllerTest {
     void cart_whenServiceUnavailable_showsUnavailableMessage() {
         CartDto cart = new CartDto(
                 List.of(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 2)), 1980L);
-        when(cartService.getCart()).thenReturn(Mono.just(cart));
+        when(cartService.getCart(1L)).thenReturn(Mono.just(cart));
         when(cartService.checkoutState(anyLong())).thenReturn(Mono.just(CheckoutState.UNAVAILABLE));
 
         webTestClient.get().uri("/cart/items").exchange()
@@ -86,14 +86,14 @@ class CartControllerTest {
 
     @Test
     void changeCount_rerendersCartView() {
-        when(cartService.changeCount(1L, Action.DELETE)).thenReturn(Mono.empty());
-        when(cartService.getCart()).thenReturn(Mono.just(new CartDto(List.of(), 0L)));
+        when(cartService.changeCount(1L, 1L, Action.DELETE)).thenReturn(Mono.empty());
+        when(cartService.getCart(1L)).thenReturn(Mono.just(new CartDto(List.of(), 0L)));
 
         webTestClient.post().uri("/cart/items")
                 .body(BodyInserters.fromFormData("id", "1").with("action", "DELETE"))
                 .exchange()
                 .expectStatus().isOk();
 
-        verify(cartService).changeCount(1L, Action.DELETE);
+        verify(cartService).changeCount(1L, 1L, Action.DELETE);
     }
 }

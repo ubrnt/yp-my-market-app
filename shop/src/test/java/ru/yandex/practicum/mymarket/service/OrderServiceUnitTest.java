@@ -89,7 +89,7 @@ class OrderServiceUnitTest {
 
     @Test
     void buy_whenPaymentSucceeds_createsOrderAndClearsCart() {
-        when(cartItemRepository.findAllWithItems()).thenReturn(Flux.just(
+        when(cartItemRepository.findAllWithItems(1L)).thenReturn(Flux.just(
                 new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2),
                 new ItemDetailedRow(2L, "Ракетка", "о", "racket.png", 500L, 1)));
         when(paymentServiceClient.pay(2480L)).thenReturn(Mono.just(PaymentResult.SUCCESS));
@@ -99,38 +99,38 @@ class OrderServiceUnitTest {
         savedOrder.setId(7L);
         when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(savedOrder));
         when(orderItemRepository.saveAll(anyIterable())).thenReturn(Flux.just(new OrderItem()));
-        when(cartItemRepository.deleteAll()).thenReturn(Mono.empty());
+        when(cartItemRepository.deleteByUserId(1L)).thenReturn(Mono.empty());
 
-        StepVerifier.create(orderService.buy())
+        StepVerifier.create(orderService.buy(1L))
                 .expectNext(7L)
                 .verifyComplete();
 
         ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
         verify(orderRepository).save(orderCaptor.capture());
         assertEquals(2480L, orderCaptor.getValue().getTotalSum());
-        verify(cartItemRepository).deleteAll();
+        verify(cartItemRepository).deleteByUserId(1L);
     }
 
     @Test
     void buy_whenInsufficientFunds_doesNotCreateOrder() {
-        when(cartItemRepository.findAllWithItems()).thenReturn(Flux.just(
+        when(cartItemRepository.findAllWithItems(1L)).thenReturn(Flux.just(
                 new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2)));
         when(paymentServiceClient.pay(1980L)).thenReturn(Mono.just(PaymentResult.INSUFFICIENT_FUNDS));
 
-        StepVerifier.create(orderService.buy())
+        StepVerifier.create(orderService.buy(1L))
                 .verifyComplete();
 
         verify(orderRepository, never()).save(any());
-        verify(cartItemRepository, never()).deleteAll();
+        verify(cartItemRepository, never()).deleteByUserId(1L);
     }
 
     @Test
     void buy_whenPaymentUnavailable_doesNotCreateOrder() {
-        when(cartItemRepository.findAllWithItems()).thenReturn(Flux.just(
+        when(cartItemRepository.findAllWithItems(1L)).thenReturn(Flux.just(
                 new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2)));
         when(paymentServiceClient.pay(1980L)).thenReturn(Mono.just(PaymentResult.UNAVAILABLE));
 
-        StepVerifier.create(orderService.buy())
+        StepVerifier.create(orderService.buy(1L))
                 .verifyComplete();
 
         verify(orderRepository, never()).save(any());
@@ -138,9 +138,9 @@ class OrderServiceUnitTest {
 
     @Test
     void buy_whenCartEmpty_throws() {
-        when(cartItemRepository.findAllWithItems()).thenReturn(Flux.empty());
+        when(cartItemRepository.findAllWithItems(1L)).thenReturn(Flux.empty());
 
-        StepVerifier.create(orderService.buy())
+        StepVerifier.create(orderService.buy(1L))
                 .expectError(IllegalStateException.class)
                 .verify();
     }
