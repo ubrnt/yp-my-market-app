@@ -22,7 +22,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/", "/items", "/items/{id}", "/images/**").permitAll()
                         .pathMatchers("/login").permitAll()
                         .anyExchange().authenticated())
-                .formLogin(withDefaults())
+                .formLogin(login -> login.loginPage("/login"))
                 .logout(withDefaults())
                 .build();
     }
