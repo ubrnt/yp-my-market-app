@@ -24,6 +24,7 @@ public class SecurityConfig {
                         .anyExchange().authenticated())
                 .formLogin(login -> login.loginPage("/login"))
                 .logout(withDefaults())
+                .anonymous(withDefaults())
                 .build();
     }
 
