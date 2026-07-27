@@ -1,6 +1,5 @@
 package ru.yandex.practicum.mymarket.client;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -14,14 +13,12 @@ import ru.yandex.practicum.mymarket.payment.dto.PaymentRequest;
 public class PaymentServiceClient {
 
     private final DefaultApi paymentApi;
-    private final long accountId;
 
-    public PaymentServiceClient(DefaultApi paymentApi, @Value("${app.payment.account-id}") long accountId) {
+    public PaymentServiceClient(DefaultApi paymentApi) {
         this.paymentApi = paymentApi;
-        this.accountId = accountId;
     }
 
-    public Mono<BalanceResult> getBalance() {
+    public Mono<BalanceResult> getBalance(long accountId) {
         return paymentApi.getBalance(accountId)
                 .map(response -> BalanceResult.available(response.getBalance()))
                 .onErrorResume(WebClientResponseException.class, e -> Mono.just(
@@ -31,7 +28,7 @@ public class PaymentServiceClient {
                 .onErrorReturn(BalanceResult.unavailable());
     }
 
-    public Mono<PaymentResult> pay(long amount) {
+    public Mono<PaymentResult> pay(long accountId, long amount) {
         return paymentApi.makePayment(accountId, new PaymentRequest().amount(amount))
                 .thenReturn(PaymentResult.SUCCESS)
                 .onErrorResume(WebClientResponseException.class, e -> {

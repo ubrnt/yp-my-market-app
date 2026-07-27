@@ -45,7 +45,7 @@ public class OrderController {
 
     @PostMapping("/buy")
     public Mono<String> buy(@AuthenticationPrincipal AppUserDetails user) {
-        return orderService.buy(user.getUserId())
+        return orderService.buy(user.getUserId(), user.getAccountId())
                 .map(orderId -> "redirect:/orders/" + orderId + "?newOrder=true")
                 .defaultIfEmpty("redirect:/cart/items");
     }

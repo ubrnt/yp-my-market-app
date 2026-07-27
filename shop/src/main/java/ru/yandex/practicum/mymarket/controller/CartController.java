@@ -26,7 +26,7 @@ public class CartController {
 
     @GetMapping
     public Mono<String> cart(@AuthenticationPrincipal AppUserDetails user, Model model) {
-        return cartService.getCart(user.getUserId()).flatMap(cart -> render(cart, model));
+        return cartService.getCart(user.getUserId()).flatMap(cart -> render(user, cart, model));
     }
 
     @PostMapping
@@ -34,11 +34,11 @@ public class CartController {
                                     @ModelAttribute CartActionRequest request, Model model) {
         return cartService.changeCount(user.getUserId(), request.itemId(), request.action())
                 .then(cartService.getCart(user.getUserId()))
-                .flatMap(cart -> render(cart, model));
+                .flatMap(cart -> render(user, cart, model));
     }
 
-    private Mono<String> render(CartDto cart, Model model) {
-        return cartService.checkoutState(cart.total()).map(state -> {
+    private Mono<String> render(AppUserDetails user, CartDto cart, Model model) {
+        return cartService.checkoutState(user.getAccountId(), cart.total()).map(state -> {
             model.addAttribute("items", cart.items());
             model.addAttribute("total", cart.total());
             model.addAttribute("checkoutState", state);

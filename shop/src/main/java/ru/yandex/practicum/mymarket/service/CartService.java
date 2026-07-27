@@ -48,8 +48,8 @@ public class CartService {
                 });
     }
 
-    public Mono<CheckoutState> checkoutState(long total) {
-        return paymentServiceClient.getBalance().map(result -> switch (result.status()) {
+    public Mono<CheckoutState> checkoutState(long accountId, long total) {
+        return paymentServiceClient.getBalance(accountId).map(result -> switch (result.status()) {
             case AVAILABLE -> result.balance() >= total ? CheckoutState.OK : CheckoutState.INSUFFICIENT_FUNDS;
             case ACCOUNT_NOT_FOUND -> CheckoutState.ACCOUNT_NOT_FOUND;
             case UNAVAILABLE -> CheckoutState.UNAVAILABLE;

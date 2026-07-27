@@ -55,7 +55,7 @@ public class OrderService {
                         : Mono.just(orderMapper.toDto(rows)));
     }
 
-    public Mono<Long> buy(Long userId) {
+    public Mono<Long> buy(Long userId, Long accountId) {
         return cartItemRepository.findAllWithItems(userId)
                 .collectList()
                 .flatMap(rows -> {
@@ -65,7 +65,7 @@ public class OrderService {
 
                     long totalSum = rows.stream().mapToLong(row -> row.price() * row.count()).sum();
 
-                    return paymentServiceClient.pay(totalSum).flatMap(result -> result == PaymentResult.SUCCESS
+                    return paymentServiceClient.pay(accountId, totalSum).flatMap(result -> result == PaymentResult.SUCCESS
                             ? placeOrder(userId, rows, totalSum)
                             : Mono.empty());
                 });

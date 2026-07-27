@@ -9,7 +9,6 @@ app:
     classpath-dir: images/
   payment:
     base-url: http://localhost:8081
-    account-id: 1
   cache:
     items:
       ttl: 120s
