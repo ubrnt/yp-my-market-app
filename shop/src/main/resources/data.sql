@@ -17,3 +17,6 @@ INSERT INTO items (title, description, price, image_path) VALUES ('Ракетк�
 INSERT INTO items (title, description, price, image_path) VALUES ('Теннисная ракетка Torneo Pulse ALU', 'Теннисная ракетка', 2990, 'tennis-racket-torneo.png');
 INSERT INTO items (title, description, price, image_path) VALUES ('Ракетка для падела Legend', 'Ракетка для падела', 3990, 'padel-racket.png');
 INSERT INTO items (title, description, price, image_path) VALUES ('Теннисная ракетка HEAD', 'Теннисная ракетка', 4490, 'tennis-racket-head.png');
+
+INSERT INTO users (username, password, account_id) VALUES ('user1', '$2y$10$UUwXR04jO5ML68AM4Jmekuz1YQB.hnyihA8r4WFANgimrBN9KEe/y', 1);
+INSERT INTO users (username, password, account_id) VALUES ('user2', '$2y$10$C9HMSAyAuGxHzb6btvCLp.2Yz6BVrnwaUUQq3YOZ1DXqdghaNsJ96', 2);
