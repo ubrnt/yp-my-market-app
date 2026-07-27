@@ -21,8 +21,8 @@ public class OrderController {
     }
 
     @GetMapping("/orders")
-    public Mono<String> orders(Model model) {
-        return orderService.getOrders()
+    public Mono<String> orders(@AuthenticationPrincipal AppUserDetails user, Model model) {
+        return orderService.getOrders(user.getUserId())
                 .collectList()
                 .map(orders -> {
                     model.addAttribute("orders", orders);
@@ -31,10 +31,11 @@ public class OrderController {
     }
 
     @GetMapping("/orders/{id}")
-    public Mono<String> order(@PathVariable Long id,
+    public Mono<String> order(@AuthenticationPrincipal AppUserDetails user,
+                              @PathVariable Long id,
                               @RequestParam(defaultValue = "false") boolean newOrder,
                               Model model) {
-        return orderService.getOrder(id)
+        return orderService.getOrder(id, user.getUserId())
                 .map(order -> {
                     model.addAttribute("order", order);
                     model.addAttribute("newOrder", newOrder);

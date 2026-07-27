@@ -40,15 +40,15 @@ public class OrderService {
         this.transactionalOperator = transactionalOperator;
     }
 
-    public Flux<OrderDto> getOrders() {
-        return orderRepository.findAllWithItems()
+    public Flux<OrderDto> getOrders(Long userId) {
+        return orderRepository.findAllWithItems(userId)
                 .collectList()
                 .map(orderMapper::toDtoList)
                 .flatMapMany(Flux::fromIterable);
     }
 
-    public Mono<OrderDto> getOrder(Long id) {
-        return orderRepository.findByIdWithItems(id)
+    public Mono<OrderDto> getOrder(Long id, Long userId) {
+        return orderRepository.findByIdWithItems(id, userId)
                 .collectList()
                 .flatMap(rows -> rows.isEmpty()
                         ? Mono.error(new NotFoundException(NotFoundException.Resource.ORDER, id))
@@ -73,6 +73,7 @@ public class OrderService {
 
     private Mono<Long> placeOrder(Long userId, List<ItemDetailedRow> rows, long totalSum) {
         Order order = new Order();
+        order.setUserId(userId);
         order.setTotalSum(totalSum);
 
         return orderRepository.save(order)
