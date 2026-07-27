@@ -11,6 +11,9 @@ public class CartItem {
     @Column("id")
     private Long id;
 
+    @Column("user_id")
+    private Long userId;
+
     @Column("item_id")
     private Long itemId;
 
@@ -23,6 +26,14 @@ public class CartItem {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Long getItemId() {

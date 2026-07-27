@@ -6,5 +6,5 @@ import ru.yandex.practicum.mymarket.repository.projection.ItemCountRow;
 
 public interface ItemRepositoryCustom {
 
-    Flux<ItemCountRow> findPageIdsWithCount(String search, SortType sort, int limit, long offset);
+    Flux<ItemCountRow> findPageIdsWithCount(Long userId, String search, SortType sort, int limit, long offset);
 }

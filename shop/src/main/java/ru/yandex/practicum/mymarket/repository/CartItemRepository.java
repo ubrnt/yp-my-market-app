@@ -14,18 +14,22 @@ public interface CartItemRepository extends R2dbcRepository<CartItem, Long> {
             SELECT i.id, i.title, i.description, i.image_path, i.price, ci.count
             FROM cart_items ci
             JOIN items i ON i.id = ci.item_id
+            WHERE ci.user_id = :userId
             ORDER BY i.id
             """)
-    Flux<ItemDetailedRow> findAllWithItems();
+    Flux<ItemDetailedRow> findAllWithItems(Long userId);
 
     @Query("""
             SELECT ci.item_id as id, ci.count
             FROM cart_items ci
+            WHERE ci.user_id = :userId
             ORDER BY ci.item_id
             """)
-    Flux<ItemCountRow> findAllIdsCount();
+    Flux<ItemCountRow> findAllIdsCount(Long userId);
 
-    Mono<CartItem> findByItemId(Long itemId);
+    Mono<CartItem> findByUserIdAndItemId(Long userId, Long itemId);
 
-    Mono<Void> deleteByItemId(Long itemId);
+    Mono<Void> deleteByUserIdAndItemId(Long userId, Long itemId);
+
+    Mono<Void> deleteByUserId(Long userId);
 }

@@ -39,10 +39,10 @@ public class ItemService {
         this.imagesClasspathDir = imagesClasspathDir;
     }
 
-    public Mono<ItemsPageDto> getItems(String search, SortType sort, int pageNumber, int pageSize) {
+    public Mono<ItemsPageDto> getItems(Long userId, String search, SortType sort, int pageNumber, int pageSize) {
         long offset = (long) (pageNumber - 1) * pageSize;
 
-        return itemRepository.findPageIdsWithCount(search, sort, pageSize + 1, offset)
+        return itemRepository.findPageIdsWithCount(userId, search, sort, pageSize + 1, offset)
                 .collectList()
                 .flatMap(rows -> {
                     boolean hasNext = rows.size() > pageSize;
@@ -62,12 +62,16 @@ public class ItemService {
                 });
     }
 
-    public Mono<ItemDto> getItem(Long id) {
+    public Mono<ItemDto> getItem(Long id, Long userId) {
         return itemProvider.get(id)
-                .flatMap(item -> itemRepository.countInCart(id)
+                .flatMap(item -> countInCart(id, userId)
                         .defaultIfEmpty(0)
                         .map(count -> itemMapper.toDto(item, count)))
                 .switchIfEmpty(Mono.error(() -> new NotFoundException(NotFoundException.Resource.ITEM, id)));
+    }
+
+    private Mono<Integer> countInCart(Long id, Long userId) {
+        return userId == null ? Mono.just(0) : itemRepository.countInCart(id, userId);
     }
 
     public Mono<byte[]> getImage(Long id) {

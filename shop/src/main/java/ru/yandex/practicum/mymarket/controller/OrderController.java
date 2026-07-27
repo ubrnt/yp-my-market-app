@@ -1,5 +1,6 @@
 package ru.yandex.practicum.mymarket.controller;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
+import ru.yandex.practicum.mymarket.security.AppUserDetails;
 import ru.yandex.practicum.mymarket.service.OrderService;
 
 @Controller
@@ -41,8 +43,8 @@ public class OrderController {
     }
 
     @PostMapping("/buy")
-    public Mono<String> buy() {
-        return orderService.buy()
+    public Mono<String> buy(@AuthenticationPrincipal AppUserDetails user) {
+        return orderService.buy(user.getUserId())
                 .map(orderId -> "redirect:/orders/" + orderId + "?newOrder=true")
                 .defaultIfEmpty("redirect:/cart/items");
     }

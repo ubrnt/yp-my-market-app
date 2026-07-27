@@ -55,8 +55,8 @@ public class OrderService {
                         : Mono.just(orderMapper.toDto(rows)));
     }
 
-    public Mono<Long> buy() {
-        return cartItemRepository.findAllWithItems()
+    public Mono<Long> buy(Long userId) {
+        return cartItemRepository.findAllWithItems(userId)
                 .collectList()
                 .flatMap(rows -> {
                     if (rows.isEmpty()) {
@@ -66,18 +66,18 @@ public class OrderService {
                     long totalSum = rows.stream().mapToLong(row -> row.price() * row.count()).sum();
 
                     return paymentServiceClient.pay(totalSum).flatMap(result -> result == PaymentResult.SUCCESS
-                            ? placeOrder(rows, totalSum)
+                            ? placeOrder(userId, rows, totalSum)
                             : Mono.empty());
                 });
     }
 
-    private Mono<Long> placeOrder(List<ItemDetailedRow> rows, long totalSum) {
+    private Mono<Long> placeOrder(Long userId, List<ItemDetailedRow> rows, long totalSum) {
         Order order = new Order();
         order.setTotalSum(totalSum);
 
         return orderRepository.save(order)
                 .flatMap(saved -> orderItemRepository.saveAll(orderMapper.toOrderItems(saved.getId(), rows))
-                        .then(cartItemRepository.deleteAll())
+                        .then(cartItemRepository.deleteByUserId(userId))
                         .thenReturn(saved.getId()))
                 .as(transactionalOperator::transactional);
     }

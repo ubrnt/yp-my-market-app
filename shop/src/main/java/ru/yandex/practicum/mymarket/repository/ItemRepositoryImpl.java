@@ -12,7 +12,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     private static final String SELECT_PAGE_IDS = """
             SELECT i.id, COALESCE(ci.count, 0) AS count
             FROM items i
-            LEFT JOIN cart_items ci ON ci.item_id = i.id
+            LEFT JOIN cart_items ci ON ci.item_id = i.id AND ci.user_id = :userId
             %s
             ORDER BY %s
             LIMIT :limit OFFSET :offset
@@ -30,13 +30,15 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     }
 
     @Override
-    public Flux<ItemCountRow> findPageIdsWithCount(String search, SortType sort, int limit, long offset) {
+    public Flux<ItemCountRow> findPageIdsWithCount(Long userId, String search, SortType sort, int limit, long offset) {
         boolean hasSearch = hasSearch(search);
         String sql = SELECT_PAGE_IDS.formatted(hasSearch ? SEARCH_CLAUSE : "", orderBy(sort));
 
         DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(sql)
                 .bind("limit", limit)
                 .bind("offset", offset);
+
+        spec = userId != null ? spec.bind("userId", userId) : spec.bindNull("userId", Long.class);
 
         if (hasSearch) {
             spec = spec.bind("search", pattern(search));
