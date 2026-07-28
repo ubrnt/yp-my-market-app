@@ -24,8 +24,8 @@ class OrderServiceIntegrationTest extends AbstractIntegrationTest {
         StepVerifier.create(
                 cartService.changeCount(1L, first.getId(), Action.PLUS)
                         .then(cartService.changeCount(1L, first.getId(), Action.PLUS))
-                        .then(orderService.buy(1L))
-                        .flatMap(orderService::getOrder)
+                        .then(orderService.buy(1L, 1L))
+                        .flatMap(orderId -> orderService.getOrder(orderId, 1L))
         ).assertNext(order -> {
             assertEquals(first.getPrice() * 2, order.totalSum());
             assertEquals(1, order.items().size());

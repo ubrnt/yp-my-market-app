@@ -34,7 +34,7 @@ class CartControllerTest {
 
     @BeforeEach
     void setUp() {
-        when(cartService.checkoutState(anyLong())).thenReturn(Mono.just(CheckoutState.OK));
+        when(cartService.checkoutState(anyLong(), anyLong())).thenReturn(Mono.just(CheckoutState.OK));
     }
 
     @Test
@@ -53,7 +53,7 @@ class CartControllerTest {
         CartDto cart = new CartDto(
                 List.of(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 2)), 1980L);
         when(cartService.getCart(1L)).thenReturn(Mono.just(cart));
-        when(cartService.checkoutState(anyLong())).thenReturn(Mono.just(CheckoutState.INSUFFICIENT_FUNDS));
+        when(cartService.checkoutState(anyLong(), anyLong())).thenReturn(Mono.just(CheckoutState.INSUFFICIENT_FUNDS));
 
         webTestClient.get().uri("/cart/items").exchange()
                 .expectStatus().isOk()
@@ -65,7 +65,7 @@ class CartControllerTest {
         CartDto cart = new CartDto(
                 List.of(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 2)), 1980L);
         when(cartService.getCart(1L)).thenReturn(Mono.just(cart));
-        when(cartService.checkoutState(anyLong())).thenReturn(Mono.just(CheckoutState.ACCOUNT_NOT_FOUND));
+        when(cartService.checkoutState(anyLong(), anyLong())).thenReturn(Mono.just(CheckoutState.ACCOUNT_NOT_FOUND));
 
         webTestClient.get().uri("/cart/items").exchange()
                 .expectStatus().isOk()
@@ -77,7 +77,7 @@ class CartControllerTest {
         CartDto cart = new CartDto(
                 List.of(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 2)), 1980L);
         when(cartService.getCart(1L)).thenReturn(Mono.just(cart));
-        when(cartService.checkoutState(anyLong())).thenReturn(Mono.just(CheckoutState.UNAVAILABLE));
+        when(cartService.checkoutState(anyLong(), anyLong())).thenReturn(Mono.just(CheckoutState.UNAVAILABLE));
 
         webTestClient.get().uri("/cart/items").exchange()
                 .expectStatus().isOk()

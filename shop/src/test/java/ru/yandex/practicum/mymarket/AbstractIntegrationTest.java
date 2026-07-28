@@ -72,7 +72,7 @@ public abstract class AbstractIntegrationTest {
 
     @BeforeEach
     void stubPaymentService() {
-        when(paymentServiceClient.getBalance()).thenReturn(Mono.just(BalanceResult.available(1_000_000L)));
-        when(paymentServiceClient.pay(anyLong())).thenReturn(Mono.just(PaymentResult.SUCCESS));
+        when(paymentServiceClient.getBalance(anyLong())).thenReturn(Mono.just(BalanceResult.available(1_000_000L)));
+        when(paymentServiceClient.pay(anyLong(), anyLong())).thenReturn(Mono.just(PaymentResult.SUCCESS));
     }
 }

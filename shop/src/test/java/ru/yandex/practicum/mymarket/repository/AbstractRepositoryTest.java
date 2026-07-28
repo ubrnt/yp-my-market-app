@@ -71,6 +71,7 @@ abstract class AbstractRepositoryTest {
 
     protected Order saveOrder(long totalSum) {
         Order order = new Order();
+        order.setUserId(testUserId);
         order.setTotalSum(totalSum);
 
         return orderRepository.save(order).block();

@@ -53,11 +53,11 @@ class OrderServiceUnitTest {
 
     @Test
     void getOrders_mapsRowsToDtos() {
-        when(orderRepository.findAllWithItems()).thenReturn(Flux.just(
+        when(orderRepository.findAllWithItems(1L)).thenReturn(Flux.just(
                 new OrderItemDetailedRow(7L, 990L, 1L, "Мяч", 990L, 1),
                 new OrderItemDetailedRow(8L, 500L, 2L, "Ракетка", 500L, 1)));
 
-        StepVerifier.create(orderService.getOrders())
+        StepVerifier.create(orderService.getOrders(1L))
                 .assertNext(order -> assertEquals(7L, order.id()))
                 .assertNext(order -> assertEquals(8L, order.id()))
                 .verifyComplete();
@@ -65,11 +65,11 @@ class OrderServiceUnitTest {
 
     @Test
     void getOrder_returnsOrderWithItems() {
-        when(orderRepository.findByIdWithItems(7L)).thenReturn(Flux.just(
+        when(orderRepository.findByIdWithItems(7L, 1L)).thenReturn(Flux.just(
                 new OrderItemDetailedRow(7L, 1480L, 1L, "Мяч", 990L, 1),
                 new OrderItemDetailedRow(7L, 1480L, 2L, "Ракетка", 490L, 1)));
 
-        StepVerifier.create(orderService.getOrder(7L))
+        StepVerifier.create(orderService.getOrder(7L, 1L))
                 .assertNext(order -> {
                     assertEquals(7L, order.id());
                     assertEquals(1480L, order.totalSum());
@@ -80,9 +80,9 @@ class OrderServiceUnitTest {
 
     @Test
     void getOrder_whenNotFound_throws() {
-        when(orderRepository.findByIdWithItems(99L)).thenReturn(Flux.empty());
+        when(orderRepository.findByIdWithItems(99L, 1L)).thenReturn(Flux.empty());
 
-        StepVerifier.create(orderService.getOrder(99L))
+        StepVerifier.create(orderService.getOrder(99L, 1L))
                 .expectError(NotFoundException.class)
                 .verify();
     }
@@ -92,7 +92,7 @@ class OrderServiceUnitTest {
         when(cartItemRepository.findAllWithItems(1L)).thenReturn(Flux.just(
                 new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2),
                 new ItemDetailedRow(2L, "Ракетка", "о", "racket.png", 500L, 1)));
-        when(paymentServiceClient.pay(2480L)).thenReturn(Mono.just(PaymentResult.SUCCESS));
+        when(paymentServiceClient.pay(1L, 2480L)).thenReturn(Mono.just(PaymentResult.SUCCESS));
         when(transactionalOperator.transactional(any(Mono.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Order savedOrder = new Order();
@@ -101,7 +101,7 @@ class OrderServiceUnitTest {
         when(orderItemRepository.saveAll(anyIterable())).thenReturn(Flux.just(new OrderItem()));
         when(cartItemRepository.deleteByUserId(1L)).thenReturn(Mono.empty());
 
-        StepVerifier.create(orderService.buy(1L))
+        StepVerifier.create(orderService.buy(1L, 1L))
                 .expectNext(7L)
                 .verifyComplete();
 
@@ -115,9 +115,9 @@ class OrderServiceUnitTest {
     void buy_whenInsufficientFunds_doesNotCreateOrder() {
         when(cartItemRepository.findAllWithItems(1L)).thenReturn(Flux.just(
                 new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2)));
-        when(paymentServiceClient.pay(1980L)).thenReturn(Mono.just(PaymentResult.INSUFFICIENT_FUNDS));
+        when(paymentServiceClient.pay(1L, 1980L)).thenReturn(Mono.just(PaymentResult.INSUFFICIENT_FUNDS));
 
-        StepVerifier.create(orderService.buy(1L))
+        StepVerifier.create(orderService.buy(1L, 1L))
                 .verifyComplete();
 
         verify(orderRepository, never()).save(any());
@@ -128,9 +128,9 @@ class OrderServiceUnitTest {
     void buy_whenPaymentUnavailable_doesNotCreateOrder() {
         when(cartItemRepository.findAllWithItems(1L)).thenReturn(Flux.just(
                 new ItemDetailedRow(1L, "Мяч", "о", "ball.png", 990L, 2)));
-        when(paymentServiceClient.pay(1980L)).thenReturn(Mono.just(PaymentResult.UNAVAILABLE));
+        when(paymentServiceClient.pay(1L, 1980L)).thenReturn(Mono.just(PaymentResult.UNAVAILABLE));
 
-        StepVerifier.create(orderService.buy(1L))
+        StepVerifier.create(orderService.buy(1L, 1L))
                 .verifyComplete();
 
         verify(orderRepository, never()).save(any());
@@ -140,7 +140,7 @@ class OrderServiceUnitTest {
     void buy_whenCartEmpty_throws() {
         when(cartItemRepository.findAllWithItems(1L)).thenReturn(Flux.empty());
 
-        StepVerifier.create(orderService.buy(1L))
+        StepVerifier.create(orderService.buy(1L, 1L))
                 .expectError(IllegalStateException.class)
                 .verify();
     }

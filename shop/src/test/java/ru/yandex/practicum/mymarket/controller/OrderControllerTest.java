@@ -34,7 +34,7 @@ class OrderControllerTest {
 
     @Test
     void orders_returnsOrdersView() {
-        when(orderService.getOrders()).thenReturn(Flux.just(order(7L)));
+        when(orderService.getOrders(1L)).thenReturn(Flux.just(order(7L)));
 
         webTestClient.get().uri("/orders").exchange()
                 .expectStatus().isOk()
@@ -43,7 +43,7 @@ class OrderControllerTest {
 
     @Test
     void order_returnsOrderView() {
-        when(orderService.getOrder(7L)).thenReturn(Mono.just(order(7L)));
+        when(orderService.getOrder(7L, 1L)).thenReturn(Mono.just(order(7L)));
 
         webTestClient.get().uri("/orders/7").exchange()
                 .expectStatus().isOk()
@@ -52,7 +52,7 @@ class OrderControllerTest {
 
     @Test
     void order_whenNotFound_returns404() {
-        when(orderService.getOrder(99L))
+        when(orderService.getOrder(99L, 1L))
                 .thenReturn(Mono.error(new NotFoundException(NotFoundException.Resource.ORDER, 99L)));
 
         webTestClient.get().uri("/orders/99").exchange()
@@ -62,7 +62,7 @@ class OrderControllerTest {
 
     @Test
     void buy_whenSuccess_redirectsToNewOrder() {
-        when(orderService.buy(1L)).thenReturn(Mono.just(7L));
+        when(orderService.buy(1L, 1L)).thenReturn(Mono.just(7L));
 
         webTestClient.post().uri("/buy").exchange()
                 .expectStatus().is3xxRedirection()
@@ -71,7 +71,7 @@ class OrderControllerTest {
 
     @Test
     void buy_whenPaymentFails_redirectsToCart() {
-        when(orderService.buy(1L)).thenReturn(Mono.empty());
+        when(orderService.buy(1L, 1L)).thenReturn(Mono.empty());
 
         webTestClient.post().uri("/buy").exchange()
                 .expectStatus().is3xxRedirection()

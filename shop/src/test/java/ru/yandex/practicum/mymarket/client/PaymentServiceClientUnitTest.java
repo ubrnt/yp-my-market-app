@@ -30,14 +30,14 @@ class PaymentServiceClientUnitTest {
 
     @BeforeEach
     void setUp() {
-        paymentServiceClient = new PaymentServiceClient(paymentApi, 1L);
+        paymentServiceClient = new PaymentServiceClient(paymentApi);
     }
 
     @Test
     void getBalance_whenAvailable_returnsBalance() {
         when(paymentApi.getBalance(1L)).thenReturn(Mono.just(new BalanceResponse().balance(100L)));
 
-        StepVerifier.create(paymentServiceClient.getBalance())
+        StepVerifier.create(paymentServiceClient.getBalance(1L))
                 .assertNext(result -> {
                     assertEquals(BalanceResult.Status.AVAILABLE, result.status());
                     assertEquals(100L, result.balance());
@@ -50,7 +50,7 @@ class PaymentServiceClientUnitTest {
         when(paymentApi.getBalance(1L))
                 .thenReturn(Mono.error(new WebClientResponseException(404, "Not Found", null, null, null)));
 
-        StepVerifier.create(paymentServiceClient.getBalance())
+        StepVerifier.create(paymentServiceClient.getBalance(1L))
                 .assertNext(result -> assertEquals(BalanceResult.Status.ACCOUNT_NOT_FOUND, result.status()))
                 .verifyComplete();
     }
@@ -59,7 +59,7 @@ class PaymentServiceClientUnitTest {
     void getBalance_whenServiceDown_returnsUnavailable() {
         when(paymentApi.getBalance(1L)).thenReturn(Mono.error(new RuntimeException("connection refused")));
 
-        StepVerifier.create(paymentServiceClient.getBalance())
+        StepVerifier.create(paymentServiceClient.getBalance(1L))
                 .assertNext(result -> assertEquals(BalanceResult.Status.UNAVAILABLE, result.status()))
                 .verifyComplete();
     }
@@ -69,7 +69,7 @@ class PaymentServiceClientUnitTest {
         when(paymentApi.makePayment(eq(1L), any(PaymentRequest.class)))
                 .thenReturn(Mono.just(new PaymentResponse().balance(50L)));
 
-        StepVerifier.create(paymentServiceClient.pay(50L))
+        StepVerifier.create(paymentServiceClient.pay(1L, 50L))
                 .expectNext(PaymentResult.SUCCESS)
                 .verifyComplete();
     }
@@ -79,7 +79,7 @@ class PaymentServiceClientUnitTest {
         when(paymentApi.makePayment(eq(1L), any(PaymentRequest.class)))
                 .thenReturn(Mono.error(new WebClientResponseException(422, "Unprocessable Content", null, null, null)));
 
-        StepVerifier.create(paymentServiceClient.pay(200_000L))
+        StepVerifier.create(paymentServiceClient.pay(1L, 200_000L))
                 .expectNext(PaymentResult.INSUFFICIENT_FUNDS)
                 .verifyComplete();
     }
@@ -89,7 +89,7 @@ class PaymentServiceClientUnitTest {
         when(paymentApi.makePayment(eq(1L), any(PaymentRequest.class)))
                 .thenReturn(Mono.error(new WebClientResponseException(404, "Not Found", null, null, null)));
 
-        StepVerifier.create(paymentServiceClient.pay(50L))
+        StepVerifier.create(paymentServiceClient.pay(1L, 50L))
                 .expectNext(PaymentResult.ACCOUNT_NOT_FOUND)
                 .verifyComplete();
     }
@@ -99,7 +99,7 @@ class PaymentServiceClientUnitTest {
         when(paymentApi.makePayment(eq(1L), any(PaymentRequest.class)))
                 .thenReturn(Mono.error(new RuntimeException("connection refused")));
 
-        StepVerifier.create(paymentServiceClient.pay(50L))
+        StepVerifier.create(paymentServiceClient.pay(1L, 50L))
                 .expectNext(PaymentResult.UNAVAILABLE)
                 .verifyComplete();
     }

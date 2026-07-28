@@ -31,7 +31,7 @@ class PaymentServiceClientIntegrationTest {
 
     @Test
     void getBalance_forKnownAccount_returnsAvailableBalance() {
-        StepVerifier.create(clientFor(1).getBalance())
+        StepVerifier.create(client().getBalance(1))
                 .assertNext(result -> {
                     assertEquals(BalanceResult.Status.AVAILABLE, result.status());
                     assertEquals(100000, result.balance());
@@ -41,29 +41,29 @@ class PaymentServiceClientIntegrationTest {
 
     @Test
     void getBalance_forUnknownAccount_returnsAccountNotFound() {
-        StepVerifier.create(clientFor(999).getBalance())
+        StepVerifier.create(client().getBalance(999))
                 .assertNext(result -> assertEquals(BalanceResult.Status.ACCOUNT_NOT_FOUND, result.status()))
                 .verifyComplete();
     }
 
     @Test
     void pay_succeeds() {
-        StepVerifier.create(clientFor(1).pay(1000))
+        StepVerifier.create(client().pay(1, 1000))
                 .expectNext(PaymentResult.SUCCESS)
                 .verifyComplete();
     }
 
     @Test
     void pay_returnsInsufficientFunds() {
-        StepVerifier.create(clientFor(2).pay(1000))
+        StepVerifier.create(client().pay(2, 1000))
                 .expectNext(PaymentResult.INSUFFICIENT_FUNDS)
                 .verifyComplete();
     }
 
-    private static PaymentServiceClient clientFor(long accountId) {
+    private static PaymentServiceClient client() {
         String baseUrl = microcks.getRestMockEndpoint("Payment Service API", "1.0.0");
         DefaultApi api = new DefaultApi(new ApiClient().setBasePath(baseUrl));
-        return new PaymentServiceClient(api, accountId);
+        return new PaymentServiceClient(api);
     }
 
     private static File resource(String name) throws URISyntaxException {
