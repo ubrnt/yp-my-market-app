@@ -13,7 +13,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import org.springframework.dao.DataIntegrityViolationException;
 import ru.yandex.practicum.payment.domain.Account;
+import ru.yandex.practicum.payment.exception.AccountAlreadyExistsException;
 import ru.yandex.practicum.payment.repository.AccountRepository;
 import ru.yandex.practicum.payment.service.PaymentService.PaymentOutcome.Status;
 
@@ -27,7 +29,28 @@ class PaymentServiceUnitTest {
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentService(accountRepository);
+        paymentService = new PaymentService(accountRepository, 10000L);
+    }
+
+    @Test
+    void createAccount_insertsWithDefaultBalance() {
+        when(accountRepository.insert(5L, 10000L)).thenReturn(Mono.just(1L));
+
+        StepVerifier.create(paymentService.createAccount(5L))
+                .assertNext(balance -> assertEquals(10000L, balance))
+                .verifyComplete();
+
+        verify(accountRepository).insert(5L, 10000L);
+    }
+
+    @Test
+    void createAccount_whenDuplicate_failsWithAlreadyExists() {
+        when(accountRepository.insert(1L, 10000L))
+                .thenReturn(Mono.error(new DataIntegrityViolationException("duplicate key")));
+
+        StepVerifier.create(paymentService.createAccount(1L))
+                .expectError(AccountAlreadyExistsException.class)
+                .verify();
     }
 
     @Test

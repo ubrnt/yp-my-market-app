@@ -60,6 +60,42 @@ class AccountsControllerIntegrationTest {
     }
 
     @Test
+    void createAccount_withWriteScope_returns201WithDefaultBalance() {
+        webTestClient.mutateWith(writeJwt())
+                .post().uri("/accounts/50")
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.balance").isEqualTo(10000);
+    }
+
+    @Test
+    void createAccount_whenAlreadyExists_returns409() {
+        webTestClient.mutateWith(writeJwt())
+                .post().uri("/accounts/1")
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("ACCOUNT_ALREADY_EXISTS")
+                .jsonPath("$.message").exists();
+    }
+
+    @Test
+    void createAccount_withoutToken_returns401() {
+        webTestClient.post().uri("/accounts/50")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void createAccount_withReadScopeOnly_returns403() {
+        webTestClient.mutateWith(readJwt())
+                .post().uri("/accounts/50")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
     void getBalance_withoutToken_returns401() {
         webTestClient.get().uri("/accounts/1/balance")
                 .exchange()

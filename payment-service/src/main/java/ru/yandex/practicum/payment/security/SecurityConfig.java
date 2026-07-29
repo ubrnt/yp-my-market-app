@@ -19,6 +19,7 @@ public class SecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.GET, "/accounts/*/balance").hasAuthority("SCOPE_payment:read")
                         .pathMatchers(HttpMethod.POST, "/accounts/*/payment").hasAuthority("SCOPE_payment:write")
+                        .pathMatchers(HttpMethod.POST, "/accounts/*").hasAuthority("SCOPE_payment:write")
                         .anyExchange().denyAll())
                 .oauth2ResourceServer(server -> server.jwt(withDefaults()))
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)

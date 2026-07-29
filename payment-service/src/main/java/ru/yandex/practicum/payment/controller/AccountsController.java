@@ -1,5 +1,6 @@
 package ru.yandex.practicum.payment.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -19,6 +20,12 @@ public class AccountsController implements AccountsApi {
 
     public AccountsController(PaymentService paymentService) {
         this.paymentService = paymentService;
+    }
+
+    @Override
+    public Mono<ResponseEntity<BalanceResponse>> createAccount(Long accountId, ServerWebExchange exchange) {
+        return paymentService.createAccount(accountId)
+                .map(balance -> ResponseEntity.status(HttpStatus.CREATED).body(new BalanceResponse(balance)));
     }
 
     @Override

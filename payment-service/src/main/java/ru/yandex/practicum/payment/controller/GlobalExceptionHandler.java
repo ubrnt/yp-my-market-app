@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.payment.dto.ErrorResponse;
+import ru.yandex.practicum.payment.exception.AccountAlreadyExistsException;
 import ru.yandex.practicum.payment.exception.AccountNotFoundException;
 import ru.yandex.practicum.payment.exception.InsufficientFundsException;
 
@@ -15,6 +16,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAccountNotFound(AccountNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(ErrorResponse.CodeEnum.ACCOUNT_NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(AccountAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleAccountAlreadyExists(AccountAlreadyExistsException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ErrorResponse.CodeEnum.ACCOUNT_ALREADY_EXISTS, e.getMessage()));
     }
 
     @ExceptionHandler(InsufficientFundsException.class)
