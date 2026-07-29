@@ -24,13 +24,13 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title mb-3">Вход</h5>
-                        <div class="alert alert-danger" th:if="${param.error}">
+                        <div class="alert alert-danger" th:if="${alert == 'error'}">
                             Неверный логин или пароль
                         </div>
-                        <div class="alert alert-success" th:if="${param.logout}">
+                        <div class="alert alert-success" th:if="${alert == 'logout'}">
                             Вы вышли из аккаунта
                         </div>
-                        <div class="alert alert-success" th:if="${param.registered}">
+                        <div class="alert alert-success" th:if="${alert == 'registered'}">
                             Регистрация успешна, теперь можно войти
                         </div>
                         <form th:action="@{/login}" method="post">
