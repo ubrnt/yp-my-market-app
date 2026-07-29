@@ -14,9 +14,11 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import ru.yandex.practicum.mymarket.client.PaymentServiceClient.BalanceResult;
+import ru.yandex.practicum.mymarket.client.PaymentServiceClient.CreateAccountResult;
 import ru.yandex.practicum.mymarket.client.PaymentServiceClient.PaymentResult;
 import ru.yandex.practicum.mymarket.payment.api.DefaultApi;
 import ru.yandex.practicum.mymarket.payment.dto.BalanceResponse;
+import ru.yandex.practicum.mymarket.payment.dto.CreateAccountResponse;
 import ru.yandex.practicum.mymarket.payment.dto.PaymentRequest;
 import ru.yandex.practicum.mymarket.payment.dto.PaymentResponse;
 
@@ -31,6 +33,28 @@ class PaymentServiceClientUnitTest {
     @BeforeEach
     void setUp() {
         paymentServiceClient = new PaymentServiceClient(paymentApi);
+    }
+
+    @Test
+    void createAccount_whenCreated_returnsCreatedWithAccountId() {
+        when(paymentApi.createAccount()).thenReturn(
+                Mono.just(new CreateAccountResponse().accountId(1000L).balance(10000L)));
+
+        StepVerifier.create(paymentServiceClient.createAccount())
+                .assertNext(result -> {
+                    assertEquals(CreateAccountResult.Status.CREATED, result.status());
+                    assertEquals(1000L, result.accountId());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void createAccount_whenServiceDown_returnsUnavailable() {
+        when(paymentApi.createAccount()).thenReturn(Mono.error(new RuntimeException("connection refused")));
+
+        StepVerifier.create(paymentServiceClient.createAccount())
+                .assertNext(result -> assertEquals(CreateAccountResult.Status.UNAVAILABLE, result.status()))
+                .verifyComplete();
     }
 
     @Test

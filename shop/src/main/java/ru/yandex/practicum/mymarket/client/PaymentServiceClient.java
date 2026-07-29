@@ -28,6 +28,12 @@ public class PaymentServiceClient {
                 .onErrorReturn(BalanceResult.unavailable());
     }
 
+    public Mono<CreateAccountResult> createAccount() {
+        return paymentApi.createAccount()
+                .map(response -> CreateAccountResult.created(response.getAccountId()))
+                .onErrorReturn(CreateAccountResult.unavailable());
+    }
+
     public Mono<PaymentResult> pay(long accountId, long amount) {
         return paymentApi.makePayment(accountId, new PaymentRequest().amount(amount))
                 .thenReturn(PaymentResult.SUCCESS)
@@ -42,6 +48,22 @@ public class PaymentServiceClient {
                     return Mono.just(PaymentResult.UNAVAILABLE);
                 })
                 .onErrorReturn(PaymentResult.UNAVAILABLE);
+    }
+
+    public record CreateAccountResult(Status status, Long accountId) {
+
+        public enum Status {
+            CREATED,
+            UNAVAILABLE
+        }
+
+        public static CreateAccountResult created(Long accountId) {
+            return new CreateAccountResult(Status.CREATED, accountId);
+        }
+
+        public static CreateAccountResult unavailable() {
+            return new CreateAccountResult(Status.UNAVAILABLE, null);
+        }
     }
 
     public enum PaymentResult {

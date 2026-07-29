@@ -162,6 +162,30 @@ class ShopFlowIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void registration_thenLoginAndCartWorks() {
+        EntityExchangeResult<String> registerPage = webTestClient.get().uri("/register").exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class).returnResult();
+
+        String session = registerPage.getResponseCookies().getFirst("SESSION").getValue();
+        String csrf = extractCsrf(registerPage.getResponseBody());
+
+        webTestClient.post().uri("/register")
+                .cookie("SESSION", session)
+                .body(BodyInserters.fromFormData("username", "user3")
+                        .with("password", "password3")
+                        .with("confirmPassword", "password3")
+                        .with("_csrf", csrf))
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueEquals("Location", "/login?registered");
+
+        Session user3 = login("user3", "password3");
+        addFirstItemToCart(user3);
+        assertEquals(1L, cartItemRepository.count().block());
+    }
+
+    @Test
     void login_protectsAgainstSessionFixation() {
         EntityExchangeResult<String> loginPage = webTestClient.get().uri("/login").exchange()
                 .expectStatus().isOk()

@@ -20,7 +20,7 @@ public class SecurityConfig {
         return http
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.GET, "/", "/items", "/items/{id}", "/images/**").permitAll()
-                        .pathMatchers("/login").permitAll()
+                        .pathMatchers("/login", "/register").permitAll()
                         .anyExchange().authenticated())
                 .formLogin(login -> login.loginPage("/login"))
                 .logout(withDefaults())

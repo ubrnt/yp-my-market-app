@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import ru.yandex.practicum.mymarket.client.PaymentServiceClient;
 import ru.yandex.practicum.mymarket.client.PaymentServiceClient.BalanceResult;
+import ru.yandex.practicum.mymarket.client.PaymentServiceClient.CreateAccountResult;
 import ru.yandex.practicum.mymarket.client.PaymentServiceClient.PaymentResult;
 import ru.yandex.practicum.mymarket.repository.CartItemRepository;
 import ru.yandex.practicum.mymarket.repository.ItemRepository;
@@ -74,5 +75,6 @@ public abstract class AbstractIntegrationTest {
     void stubPaymentService() {
         when(paymentServiceClient.getBalance(anyLong())).thenReturn(Mono.just(BalanceResult.available(1_000_000L)));
         when(paymentServiceClient.pay(anyLong(), anyLong())).thenReturn(Mono.just(PaymentResult.SUCCESS));
+        when(paymentServiceClient.createAccount()).thenReturn(Mono.just(CreateAccountResult.created(1000L)));
     }
 }
