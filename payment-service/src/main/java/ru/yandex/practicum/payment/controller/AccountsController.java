@@ -7,6 +7,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.payment.api.AccountsApi;
 import ru.yandex.practicum.payment.dto.BalanceResponse;
+import ru.yandex.practicum.payment.dto.CreateAccountResponse;
 import ru.yandex.practicum.payment.dto.PaymentRequest;
 import ru.yandex.practicum.payment.dto.PaymentResponse;
 import ru.yandex.practicum.payment.exception.AccountNotFoundException;
@@ -23,9 +24,10 @@ public class AccountsController implements AccountsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<BalanceResponse>> createAccount(Long accountId, ServerWebExchange exchange) {
-        return paymentService.createAccount(accountId)
-                .map(balance -> ResponseEntity.status(HttpStatus.CREATED).body(new BalanceResponse(balance)));
+    public Mono<ResponseEntity<CreateAccountResponse>> createAccount(ServerWebExchange exchange) {
+        return paymentService.createAccount()
+                .map(account -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(new CreateAccountResponse(account.getId(), account.getBalance())));
     }
 
     @Override

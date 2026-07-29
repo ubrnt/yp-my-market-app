@@ -7,30 +7,17 @@ servers:
   - url: http://localhost:8081
     description: Local payment service
 paths:
-  /accounts/{accountId}:
+  /accounts:
     post:
       operationId: createAccount
       summary: Create an account with the default starting balance
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
       responses:
         '201':
           description: Account created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BalanceResponse'
-        '409':
-          description: Account already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/CreateAccountResponse'
   /accounts/{accountId}/balance:
     get:
       operationId: getBalance
@@ -101,6 +88,18 @@ components:
         balance:
           type: integer
           format: int64
+    CreateAccountResponse:
+      type: object
+      required:
+        - accountId
+        - balance
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        balance:
+          type: integer
+          format: int64
     PaymentRequest:
       type: object
       required:
@@ -129,6 +128,5 @@ components:
           enum:
             - INSUFFICIENT_FUNDS
             - ACCOUNT_NOT_FOUND
-            - ACCOUNT_ALREADY_EXISTS
         message:
           type: string

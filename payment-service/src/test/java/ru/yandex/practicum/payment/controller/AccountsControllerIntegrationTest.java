@@ -60,29 +60,19 @@ class AccountsControllerIntegrationTest {
     }
 
     @Test
-    void createAccount_withWriteScope_returns201WithDefaultBalance() {
+    void createAccount_withWriteScope_returns201WithGeneratedIdAndDefaultBalance() {
         webTestClient.mutateWith(writeJwt())
-                .post().uri("/accounts/50")
+                .post().uri("/accounts")
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody()
+                .jsonPath("$.accountId").isNumber()
                 .jsonPath("$.balance").isEqualTo(10000);
     }
 
     @Test
-    void createAccount_whenAlreadyExists_returns409() {
-        webTestClient.mutateWith(writeJwt())
-                .post().uri("/accounts/1")
-                .exchange()
-                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-                .expectBody()
-                .jsonPath("$.code").isEqualTo("ACCOUNT_ALREADY_EXISTS")
-                .jsonPath("$.message").exists();
-    }
-
-    @Test
     void createAccount_withoutToken_returns401() {
-        webTestClient.post().uri("/accounts/50")
+        webTestClient.post().uri("/accounts")
                 .exchange()
                 .expectStatus().isUnauthorized();
     }
@@ -90,7 +80,7 @@ class AccountsControllerIntegrationTest {
     @Test
     void createAccount_withReadScopeOnly_returns403() {
         webTestClient.mutateWith(readJwt())
-                .post().uri("/accounts/50")
+                .post().uri("/accounts")
                 .exchange()
                 .expectStatus().isForbidden();
     }

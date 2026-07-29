@@ -1,10 +1,8 @@
 package ru.yandex.practicum.payment.service;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.payment.exception.AccountAlreadyExistsException;
 import ru.yandex.practicum.payment.domain.Account;
 import ru.yandex.practicum.payment.repository.AccountRepository;
 
@@ -20,11 +18,11 @@ public class PaymentService {
         this.defaultBalance = defaultBalance;
     }
 
-    public Mono<Long> createAccount(Long accountId) {
-        return accountRepository.insert(accountId, defaultBalance)
-                .onErrorMap(DataIntegrityViolationException.class,
-                        e -> new AccountAlreadyExistsException(accountId))
-                .thenReturn(defaultBalance);
+    public Mono<Account> createAccount() {
+        Account account = new Account();
+        account.setBalance(defaultBalance);
+
+        return accountRepository.save(account);
     }
 
     public Mono<Long> getBalance(Long accountId) {
