@@ -32,6 +32,10 @@ services:
     depends_on:
       - redis
       - payment-service
+      - keycloak
+    environment:
+      SHOP_CLIENT_SECRET: ${SHOP_CLIENT_SECRET:-default-dev-secret}
+      KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/my-market/protocol/openid-connect/token
     command:
       - "--spring.data.redis.host=redis"
       - "--app.payment.base-url=http://payment-service:8081"
