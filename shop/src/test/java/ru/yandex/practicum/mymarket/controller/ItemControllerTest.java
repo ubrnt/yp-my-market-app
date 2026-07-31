@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
@@ -63,7 +62,7 @@ class ItemControllerTest {
     @Test
     void items_anonymous_showsItemsWithoutCartControls() {
         ItemDto item = new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 0);
-        when(itemService.getItems(isNull(), any(), any(), anyInt(), anyInt())).thenReturn(Mono.just(page(item)));
+        when(itemService.getItemsAnonymous(any(), any(), anyInt(), anyInt())).thenReturn(Mono.just(page(item)));
 
         webTestClient.get().uri("/items").exchange()
                 .expectStatus().isOk()
@@ -120,7 +119,7 @@ class ItemControllerTest {
 
     @Test
     void item_anonymous_returnsItemView() {
-        when(itemService.getItem(1L, null))
+        when(itemService.getItemAnonymous(1L))
                 .thenReturn(Mono.just(new ItemDto(1L, "Кепка", "Чёрная кепка", "images/1", 990L, 0)));
 
         webTestClient.get().uri("/items/1").exchange()
@@ -155,7 +154,7 @@ class ItemControllerTest {
 
     @Test
     void item_whenNotFound_returns404() {
-        when(itemService.getItem(999L, null))
+        when(itemService.getItemAnonymous(999L))
                 .thenReturn(Mono.error(new NotFoundException(NotFoundException.Resource.ITEM, 999L)));
 
         webTestClient.get().uri("/items/999").exchange()

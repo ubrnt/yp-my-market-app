@@ -40,13 +40,21 @@ public class ItemService {
         this.imagesClasspathDir = imagesClasspathDir;
     }
 
-    public Mono<ItemsPageDto> getItems(Long userId, String search, SortType sort, int pageNumber, int pageSize) {
+    public Mono<ItemsPageDto> getItems(long userId, String search, SortType sort, int pageNumber, int pageSize) {
         long offset = (long) (pageNumber - 1) * pageSize;
 
-        Flux<ItemCountRow> pageIds = userId != null
-                ? itemRepository.findPageIdsWithCount(userId, search, sort, pageSize + 1, offset)
-                : itemRepository.findPageIdsAnonymous(search, sort, pageSize + 1, offset);
+        return buildPage(itemRepository.findPageIdsWithCount(userId, search, sort, pageSize + 1, offset),
+                pageNumber, pageSize);
+    }
 
+    public Mono<ItemsPageDto> getItemsAnonymous(String search, SortType sort, int pageNumber, int pageSize) {
+        long offset = (long) (pageNumber - 1) * pageSize;
+
+        return buildPage(itemRepository.findPageIdsAnonymous(search, sort, pageSize + 1, offset),
+                pageNumber, pageSize);
+    }
+
+    private Mono<ItemsPageDto> buildPage(Flux<ItemCountRow> pageIds, int pageNumber, int pageSize) {
         return pageIds
                 .collectList()
                 .flatMap(rows -> {
@@ -67,16 +75,20 @@ public class ItemService {
                 });
     }
 
-    public Mono<ItemDto> getItem(Long id, Long userId) {
-        return itemProvider.get(id)
-                .flatMap(item -> countInCart(id, userId)
-                        .defaultIfEmpty(0)
-                        .map(count -> itemMapper.toDto(item, count)))
-                .switchIfEmpty(Mono.error(() -> new NotFoundException(NotFoundException.Resource.ITEM, id)));
+    public Mono<ItemDto> getItem(Long id, long userId) {
+        return itemWithCount(id, itemRepository.countInCart(id, userId));
     }
 
-    private Mono<Integer> countInCart(Long id, Long userId) {
-        return userId == null ? Mono.just(0) : itemRepository.countInCart(id, userId);
+    public Mono<ItemDto> getItemAnonymous(Long id) {
+        return itemWithCount(id, Mono.just(0));
+    }
+
+    private Mono<ItemDto> itemWithCount(Long id, Mono<Integer> count) {
+        return itemProvider.get(id)
+                .flatMap(item -> count
+                        .defaultIfEmpty(0)
+                        .map(c -> itemMapper.toDto(item, c)))
+                .switchIfEmpty(Mono.error(() -> new NotFoundException(NotFoundException.Resource.ITEM, id)));
     }
 
     public Mono<byte[]> getImage(Long id) {

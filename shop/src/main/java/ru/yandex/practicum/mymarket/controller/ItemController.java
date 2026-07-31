@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.Action;
+import ru.yandex.practicum.mymarket.dto.ItemDto;
+import ru.yandex.practicum.mymarket.dto.ItemsPageDto;
 import ru.yandex.practicum.mymarket.dto.SortType;
 import ru.yandex.practicum.mymarket.security.AppUserDetails;
 import ru.yandex.practicum.mymarket.service.CartService;
@@ -39,10 +41,14 @@ public class ItemController {
                               @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER) int pageNumber,
                               @RequestParam(defaultValue = DEFAULT_PAGE_SIZE) int pageSize,
                               Model model) {
-        return itemService.getItems(userId(user), search, sort, pageNumber, pageSize)
-                .map(page -> {
-                    model.addAttribute("items", page.items());
-                    model.addAttribute("paging", page.paging());
+        Mono<ItemsPageDto> page = user != null
+                ? itemService.getItems(user.getUserId(), search, sort, pageNumber, pageSize)
+                : itemService.getItemsAnonymous(search, sort, pageNumber, pageSize);
+
+        return page
+                .map(p -> {
+                    model.addAttribute("items", p.items());
+                    model.addAttribute("paging", p.paging());
                     model.addAttribute("search", search);
                     model.addAttribute("sort", sort);
                     return "items";
@@ -65,9 +71,13 @@ public class ItemController {
 
     @GetMapping("/items/{id}")
     public Mono<String> item(@AuthenticationPrincipal AppUserDetails user, @PathVariable Long id, Model model) {
-        return itemService.getItem(id, userId(user))
-                .map(item -> {
-                    model.addAttribute("item", item);
+        Mono<ItemDto> item = user != null
+                ? itemService.getItem(id, user.getUserId())
+                : itemService.getItemAnonymous(id);
+
+        return item
+                .map(dto -> {
+                    model.addAttribute("item", dto);
                     return "item";
                 });
     }
@@ -83,10 +93,6 @@ public class ItemController {
                     model.addAttribute("item", item);
                     return "item";
                 });
-    }
-
-    private Long userId(AppUserDetails user) {
-        return user != null ? user.getUserId() : null;
     }
 
     public record ListActionRequest(

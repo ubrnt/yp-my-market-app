@@ -39,7 +39,7 @@ class ItemServiceIntegrationTest extends AbstractIntegrationTest {
         cartItem.setCount(3);
         cartItemRepository.save(cartItem).block();
 
-        StepVerifier.create(itemService.getItems(null, null, SortType.NO, 1, 5))
+        StepVerifier.create(itemService.getItemsAnonymous( null, SortType.NO, 1, 5))
                 .assertNext(page -> {
                     assertFalse(page.items().isEmpty());
                     page.items().stream()
