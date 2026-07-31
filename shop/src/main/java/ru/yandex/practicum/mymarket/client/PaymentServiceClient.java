@@ -1,5 +1,7 @@
 package ru.yandex.practicum.mymarket.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,8 @@ import ru.yandex.practicum.mymarket.payment.dto.PaymentRequest;
 
 @Component
 public class PaymentServiceClient {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentServiceClient.class);
 
     private final DefaultApi paymentApi;
 
@@ -31,7 +35,14 @@ public class PaymentServiceClient {
     public Mono<CreateAccountResult> createAccount() {
         return paymentApi.createAccount()
                 .map(response -> CreateAccountResult.created(response.getAccountId()))
-                .onErrorReturn(CreateAccountResult.unavailable());
+                .onErrorResume(WebClientResponseException.class, e -> {
+                    log.error("payment-service rejected account creation: {}", e.getStatusCode());
+                    return Mono.just(CreateAccountResult.unavailable());
+                })
+                .onErrorResume(e -> {
+                    log.warn("payment-service is unreachable, account not created", e);
+                    return Mono.just(CreateAccountResult.unavailable());
+                });
     }
 
     public Mono<PaymentResult> pay(long accountId, long amount) {

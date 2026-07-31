@@ -49,6 +49,16 @@ class PaymentServiceClientUnitTest {
     }
 
     @Test
+    void createAccount_whenRejectedByService_returnsUnavailable() {
+        when(paymentApi.createAccount()).thenReturn(Mono.error(
+                WebClientResponseException.create(403, "Forbidden", null, null, null)));
+
+        StepVerifier.create(paymentServiceClient.createAccount())
+                .assertNext(result -> assertEquals(CreateAccountResult.Status.UNAVAILABLE, result.status()))
+                .verifyComplete();
+    }
+
+    @Test
     void createAccount_whenServiceDown_returnsUnavailable() {
         when(paymentApi.createAccount()).thenReturn(Mono.error(new RuntimeException("connection refused")));
 
