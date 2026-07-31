@@ -1,20 +1,30 @@
 package ru.yandex.practicum.mymarket.controller;
 
+import java.util.Locale;
+
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.service.UserService;
+import ru.yandex.practicum.mymarket.validation.PasswordsMatch;
 
 @Controller
 public class RegistrationController {
 
     private final UserService userService;
+    private final MessageSource messageSource;
 
-    public RegistrationController(UserService userService) {
+    public RegistrationController(UserService userService, MessageSource messageSource) {
         this.userService = userService;
+        this.messageSource = messageSource;
     }
 
     @GetMapping("/register")
@@ -23,30 +33,24 @@ public class RegistrationController {
     }
 
     @PostMapping("/register")
-    public Mono<String> register(@ModelAttribute RegistrationRequest request, Model model) {
-        String error = validate(request);
-        if (error != null) {
+    public Mono<String> register(@Valid @ModelAttribute RegistrationRequest request,
+                                 BindingResult bindingResult,
+                                 Model model) {
+        if (bindingResult.hasErrors()) {
+            String error = bindingResult.getAllErrors().getFirst().getDefaultMessage();
             return Mono.just(renderError(request, error, model));
         }
 
         return userService.register(request.username().trim(), request.password())
                 .map(result -> switch (result) {
                     case SUCCESS -> "redirect:/login?registered";
-                    case USERNAME_TAKEN -> renderError(request, "Логин уже занят", model);
-                    case PAYMENT_UNAVAILABLE ->
-                            renderError(request, "Регистрация временно недоступна: сервис счетов не отвечает", model);
+                    case USERNAME_TAKEN -> renderError(request, message("registration.username.taken"), model);
+                    case PAYMENT_UNAVAILABLE -> renderError(request, message("registration.payment.unavailable"), model);
                 });
     }
 
-    private String validate(RegistrationRequest request) {
-        if (request.username() == null || request.username().isBlank()
-                || request.password() == null || request.password().isBlank()) {
-            return "Заполните логин и пароль";
-        }
-        if (!request.password().equals(request.confirmPassword())) {
-            return "Пароли не совпадают";
-        }
-        return null;
+    private String message(String code) {
+        return messageSource.getMessage(code, null, Locale.getDefault());
     }
 
     private String renderError(RegistrationRequest request, String error, Model model) {
@@ -55,6 +59,10 @@ public class RegistrationController {
         return "registration";
     }
 
-    public record RegistrationRequest(String username, String password, String confirmPassword) {
+    @PasswordsMatch
+    public record RegistrationRequest(
+            @NotBlank(message = "{registration.fields.required}") String username,
+            @NotBlank(message = "{registration.fields.required}") String password,
+            String confirmPassword) {
     }
 }
