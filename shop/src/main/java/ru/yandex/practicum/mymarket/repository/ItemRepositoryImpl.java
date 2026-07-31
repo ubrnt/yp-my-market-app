@@ -18,6 +18,14 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
             LIMIT :limit OFFSET :offset
             """;
 
+    private static final String SELECT_PAGE_IDS_ANONYMOUS = """
+            SELECT i.id, 0 AS count
+            FROM items i
+            %s
+            ORDER BY %s
+            LIMIT :limit OFFSET :offset
+            """;
+
     private static final String SEARCH_CLAUSE = """
             WHERE lower(i.title) LIKE :search
                OR lower(i.description) LIKE :search
@@ -30,21 +38,30 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     }
 
     @Override
-    public Flux<ItemCountRow> findPageIdsWithCount(Long userId, String search, SortType sort, int limit, long offset) {
+    public Flux<ItemCountRow> findPageIdsWithCount(long userId, String search, SortType sort, int limit, long offset) {
+        return pageIdsSpec(SELECT_PAGE_IDS, search, sort, limit, offset)
+                .bind("userId", userId)
+                .map(this::toItemCountRow)
+                .all();
+    }
+
+    @Override
+    public Flux<ItemCountRow> findPageIdsAnonymous(String search, SortType sort, int limit, long offset) {
+        return pageIdsSpec(SELECT_PAGE_IDS_ANONYMOUS, search, sort, limit, offset)
+                .map(this::toItemCountRow)
+                .all();
+    }
+
+    private DatabaseClient.GenericExecuteSpec pageIdsSpec(String template, String search, SortType sort,
+                                                          int limit, long offset) {
         boolean hasSearch = hasSearch(search);
-        String sql = SELECT_PAGE_IDS.formatted(hasSearch ? SEARCH_CLAUSE : "", orderBy(sort));
+        String sql = template.formatted(hasSearch ? SEARCH_CLAUSE : "", orderBy(sort));
 
         DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(sql)
                 .bind("limit", limit)
                 .bind("offset", offset);
 
-        spec = userId != null ? spec.bind("userId", userId) : spec.bindNull("userId", Long.class);
-
-        if (hasSearch) {
-            spec = spec.bind("search", pattern(search));
-        }
-
-        return spec.map(this::toItemCountRow).all();
+        return hasSearch ? spec.bind("search", pattern(search)) : spec;
     }
 
     private ItemCountRow toItemCountRow(Row row, RowMetadata metadata) {

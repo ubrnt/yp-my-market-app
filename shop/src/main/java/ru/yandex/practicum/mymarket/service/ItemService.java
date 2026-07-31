@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.cache.RedisItemProvider;
 import ru.yandex.practicum.mymarket.dto.ItemDto;
@@ -42,7 +43,11 @@ public class ItemService {
     public Mono<ItemsPageDto> getItems(Long userId, String search, SortType sort, int pageNumber, int pageSize) {
         long offset = (long) (pageNumber - 1) * pageSize;
 
-        return itemRepository.findPageIdsWithCount(userId, search, sort, pageSize + 1, offset)
+        Flux<ItemCountRow> pageIds = userId != null
+                ? itemRepository.findPageIdsWithCount(userId, search, sort, pageSize + 1, offset)
+                : itemRepository.findPageIdsAnonymous(search, sort, pageSize + 1, offset);
+
+        return pageIds
                 .collectList()
                 .flatMap(rows -> {
                     boolean hasNext = rows.size() > pageSize;

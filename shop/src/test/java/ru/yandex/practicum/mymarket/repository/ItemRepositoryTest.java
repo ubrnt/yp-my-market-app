@@ -77,6 +77,20 @@ class ItemRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
+    void findPageIdsWithCount_anonymous_returnsZeroCountsWithoutCartJoin() {
+        Item inCart = saveItem("В корзине", "", 100L, "a.png");
+        saveCartItem(inCart.getId(), 2);
+
+        StepVerifier.create(itemRepository.findPageIdsAnonymous(null, SortType.NO, 10, 0).collectList())
+                .assertNext(rows -> {
+                    assertEquals(1, rows.size());
+                    assertEquals(inCart.getId(), rows.get(0).id());
+                    assertEquals(0, rows.get(0).count());
+                })
+                .verifyComplete();
+    }
+
+    @Test
     void findPageIdsWithCount_setsCountFromCart() {
         Item inCart = saveItem("В корзине", "", 100L, "a.png");
         Item notInCart = saveItem("Не в корзине", "", 200L, "b.png");
