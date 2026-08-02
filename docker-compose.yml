@@ -4,12 +4,28 @@ services:
     ports:
       - "6379:6379"
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      SHOP_CLIENT_SECRET: ${SHOP_CLIENT_SECRET:-default-dev-secret}
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+
   payment-service:
     build:
       context: .
       dockerfile: payment-service/Dockerfile
     ports:
       - "8081:8081"
+    depends_on:
+      - keycloak
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/my-market
 
   shop:
     build:
@@ -20,6 +36,10 @@ services:
     depends_on:
       - redis
       - payment-service
+      - keycloak
+    environment:
+      SHOP_CLIENT_SECRET: ${SHOP_CLIENT_SECRET:-default-dev-secret}
+      KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/my-market/protocol/openid-connect/token
     command:
       - "--spring.data.redis.host=redis"
       - "--app.payment.base-url=http://payment-service:8081"

@@ -34,8 +34,8 @@ public class CartService {
         this.redisItemProvider = redisItemProvider;
     }
 
-    public Mono<CartDto> getCart() {
-        return cartItemRepository.findAllIdsCount()
+    public Mono<CartDto> getCart(Long userId) {
+        return cartItemRepository.findAllIdsCount(userId)
                 .collectList().flatMap(idCounts -> {
                     List<Long> ids = idCounts.stream().map(ItemCountRow::id).toList();
                     Map<Long, Integer> counts = idCounts.stream()
@@ -48,42 +48,43 @@ public class CartService {
                 });
     }
 
-    public Mono<CheckoutState> checkoutState(long total) {
-        return paymentServiceClient.getBalance().map(result -> switch (result.status()) {
+    public Mono<CheckoutState> checkoutState(long accountId, long total) {
+        return paymentServiceClient.getBalance(accountId).map(result -> switch (result.status()) {
             case AVAILABLE -> result.balance() >= total ? CheckoutState.OK : CheckoutState.INSUFFICIENT_FUNDS;
             case ACCOUNT_NOT_FOUND -> CheckoutState.ACCOUNT_NOT_FOUND;
             case UNAVAILABLE -> CheckoutState.UNAVAILABLE;
         });
     }
 
-    public Mono<Void> changeCount(Long itemId, Action action) {
+    public Mono<Void> changeCount(Long userId, Long itemId, Action action) {
         return switch (action) {
-            case PLUS -> increase(itemId);
-            case MINUS -> decrease(itemId);
-            case DELETE -> cartItemRepository.deleteByItemId(itemId);
+            case PLUS -> increase(userId, itemId);
+            case MINUS -> decrease(userId, itemId);
+            case DELETE -> cartItemRepository.deleteByUserIdAndItemId(userId, itemId);
         };
     }
 
-    private Mono<Void> increase(Long itemId) {
-        return cartItemRepository.findByItemId(itemId)
+    private Mono<Void> increase(Long userId, Long itemId) {
+        return cartItemRepository.findByUserIdAndItemId(userId, itemId)
                 .flatMap(cartItem -> {
                     cartItem.setCount(cartItem.getCount() + 1);
                     return cartItemRepository.save(cartItem);
                 })
-                .switchIfEmpty(Mono.defer(() -> addNewToCart(itemId)))
+                .switchIfEmpty(Mono.defer(() -> addNewToCart(userId, itemId)))
                 .then();
     }
 
-    private Mono<CartItem> addNewToCart(Long itemId) {
+    private Mono<CartItem> addNewToCart(Long userId, Long itemId) {
         CartItem cartItem = new CartItem();
+        cartItem.setUserId(userId);
         cartItem.setItemId(itemId);
         cartItem.setCount(1);
 
         return cartItemRepository.save(cartItem);
     }
 
-    private Mono<Void> decrease(Long itemId) {
-        return cartItemRepository.findByItemId(itemId)
+    private Mono<Void> decrease(Long userId, Long itemId) {
+        return cartItemRepository.findByUserIdAndItemId(userId, itemId)
                 .flatMap(cartItem -> {
                     int newCount = cartItem.getCount() - 1;
                     if (newCount <= 0) {

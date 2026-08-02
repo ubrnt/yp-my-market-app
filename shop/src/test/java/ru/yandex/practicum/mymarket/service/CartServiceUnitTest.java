@@ -45,12 +45,12 @@ class CartServiceUnitTest {
 
     @Test
     void getCart_mapsItemsFromProviderAndComputesTotal() {
-        when(cartItemRepository.findAllIdsCount())
+        when(cartItemRepository.findAllIdsCount(1L))
                 .thenReturn(Flux.just(new ItemCountRow(1L, 2), new ItemCountRow(2L, 1)));
         when(redisItemProvider.getAll(List.of(1L, 2L)))
                 .thenReturn(Flux.just(item(1L, "Мяч", 990L), item(2L, "Ракетка", 1990L)));
 
-        StepVerifier.create(cartService.getCart())
+        StepVerifier.create(cartService.getCart(1L))
                 .assertNext(cart -> {
                     assertEquals(2, cart.items().size());
                     assertEquals(1L, cart.items().get(0).id());
@@ -65,10 +65,10 @@ class CartServiceUnitTest {
     @Test
     void plus_whenAlreadyInCart_increments() {
         CartItem existing = cartItem(10L, 1L, 2);
-        when(cartItemRepository.findByItemId(1L)).thenReturn(Mono.just(existing));
+        when(cartItemRepository.findByUserIdAndItemId(1L, 1L)).thenReturn(Mono.just(existing));
         when(cartItemRepository.save(existing)).thenReturn(Mono.just(existing));
 
-        StepVerifier.create(cartService.changeCount(1L, Action.PLUS)).verifyComplete();
+        StepVerifier.create(cartService.changeCount(1L, 1L, Action.PLUS)).verifyComplete();
 
         assertEquals(3, existing.getCount());
         verify(cartItemRepository).save(existing);
@@ -76,10 +76,10 @@ class CartServiceUnitTest {
 
     @Test
     void plus_whenNotInCart_createsCartItemWithCountOne() {
-        when(cartItemRepository.findByItemId(1L)).thenReturn(Mono.empty());
+        when(cartItemRepository.findByUserIdAndItemId(1L, 1L)).thenReturn(Mono.empty());
         when(cartItemRepository.save(any(CartItem.class))).thenReturn(Mono.just(new CartItem()));
 
-        StepVerifier.create(cartService.changeCount(1L, Action.PLUS)).verifyComplete();
+        StepVerifier.create(cartService.changeCount(1L, 1L, Action.PLUS)).verifyComplete();
 
         ArgumentCaptor<CartItem> captor = ArgumentCaptor.forClass(CartItem.class);
         verify(cartItemRepository).save(captor.capture());
@@ -90,10 +90,10 @@ class CartServiceUnitTest {
     @Test
     void minus_whenCountAboveOne_decrements() {
         CartItem existing = cartItem(10L, 1L, 3);
-        when(cartItemRepository.findByItemId(1L)).thenReturn(Mono.just(existing));
+        when(cartItemRepository.findByUserIdAndItemId(1L, 1L)).thenReturn(Mono.just(existing));
         when(cartItemRepository.save(existing)).thenReturn(Mono.just(existing));
 
-        StepVerifier.create(cartService.changeCount(1L, Action.MINUS)).verifyComplete();
+        StepVerifier.create(cartService.changeCount(1L, 1L, Action.MINUS)).verifyComplete();
 
         assertEquals(2, existing.getCount());
         verify(cartItemRepository).save(existing);
@@ -102,10 +102,10 @@ class CartServiceUnitTest {
     @Test
     void minus_whenCountReachesZero_deletes() {
         CartItem existing = cartItem(10L, 1L, 1);
-        when(cartItemRepository.findByItemId(1L)).thenReturn(Mono.just(existing));
+        when(cartItemRepository.findByUserIdAndItemId(1L, 1L)).thenReturn(Mono.just(existing));
         when(cartItemRepository.delete(existing)).thenReturn(Mono.empty());
 
-        StepVerifier.create(cartService.changeCount(1L, Action.MINUS)).verifyComplete();
+        StepVerifier.create(cartService.changeCount(1L, 1L, Action.MINUS)).verifyComplete();
 
         verify(cartItemRepository).delete(existing);
         verify(cartItemRepository, never()).save(any());
@@ -113,11 +113,11 @@ class CartServiceUnitTest {
 
     @Test
     void delete_removesCartItem() {
-        when(cartItemRepository.deleteByItemId(1L)).thenReturn(Mono.empty());
+        when(cartItemRepository.deleteByUserIdAndItemId(1L, 1L)).thenReturn(Mono.empty());
 
-        StepVerifier.create(cartService.changeCount(1L, Action.DELETE)).verifyComplete();
+        StepVerifier.create(cartService.changeCount(1L, 1L, Action.DELETE)).verifyComplete();
 
-        verify(cartItemRepository).deleteByItemId(1L);
+        verify(cartItemRepository).deleteByUserIdAndItemId(1L, 1L);
     }
 
     private static CartItem cartItem(Long id, Long itemId, int count) {

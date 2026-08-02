@@ -1,5 +1,6 @@
 package ru.yandex.practicum.payment.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.payment.domain.Account;
@@ -9,9 +10,19 @@ import ru.yandex.practicum.payment.repository.AccountRepository;
 public class PaymentService {
 
     private final AccountRepository accountRepository;
+    private final long defaultBalance;
 
-    public PaymentService(AccountRepository accountRepository) {
+    public PaymentService(AccountRepository accountRepository,
+                          @Value("${app.account.default-balance}") long defaultBalance) {
         this.accountRepository = accountRepository;
+        this.defaultBalance = defaultBalance;
+    }
+
+    public Mono<Account> createAccount() {
+        Account account = new Account();
+        account.setBalance(defaultBalance);
+
+        return accountRepository.save(account);
     }
 
     public Mono<Long> getBalance(Long accountId) {

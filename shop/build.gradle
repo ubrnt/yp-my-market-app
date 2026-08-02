@@ -9,6 +9,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
 	runtimeOnly 'io.r2dbc:r2dbc-h2'
 
@@ -16,6 +20,7 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-webflux-test'
 	testImplementation 'org.springframework.boot:spring-boot-data-r2dbc-test'
 	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.testcontainers:testcontainers:1.20.4'
 	testImplementation 'io.github.microcks:microcks-testcontainers:0.4.4'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -43,6 +48,7 @@ openApiGenerate {
 
 tasks.named('test') {
 	environment 'TESTCONTAINERS_RYUK_DISABLED', 'true'
+	environment 'SHOP_CLIENT_SECRET', 'test-secret'
 	systemProperty 'payment.openapi.spec', rootProject.paymentApiSpec
 }
 

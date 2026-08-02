@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta charset="utf-8">
@@ -14,10 +14,14 @@
             <div class="col">
                 <div class="hstack gap-3">
                     <h2>
-                        <span class="badge text-bg-success">Витрина магазина</span>
+                        <a href="/" class="badge text-bg-success text-decoration-none">Витрина магазина</a>
                     </h2>
                     <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
                     <a href="/items" class="btn btn-secondary bi bi-arrow-left-square"> Главная</a>
+                    <span class="badge text-bg-secondary" sec:authorize="isAuthenticated()" sec:authentication="name"></span>
+                    <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
+                        <button type="submit" class="btn btn-outline-secondary bi bi-box-arrow-right"> Выйти</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -46,7 +50,7 @@
         </div>
         <div class="row p-2">
             <div class="col">
-                <form action="/buy" method="post" th:if="${!items.isEmpty()}">
+                <form th:action="@{/buy}" method="post" th:if="${!items.isEmpty()}">
                     <div class="hstack gap-3">
                         <h2 th:text="'Итого: '+${total}+' руб.'"/>
                         <button class="btn btn-warning ms-auto"

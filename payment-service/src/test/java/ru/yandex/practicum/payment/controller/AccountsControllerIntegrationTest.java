@@ -1,12 +1,19 @@
 package ru.yandex.practicum.payment.controller;
 
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
+import org.springframework.test.web.reactive.server.MockServerConfigurer;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.test.StepVerifier;
 import ru.yandex.practicum.payment.domain.Account;
@@ -17,12 +24,29 @@ import ru.yandex.practicum.payment.repository.AccountRepository;
 @AutoConfigureWebTestClient
 class AccountsControllerIntegrationTest {
 
+    @TestConfiguration
+    static class SecurityTestConfig {
+
+        @Bean
+        MockServerConfigurer springSecurityMockServerConfigurer() {
+            return SecurityMockServerConfigurers.springSecurity();
+        }
+    }
+
     @Autowired
     WebTestClient webTestClient;
     @Autowired
     AccountRepository accountRepository;
     @Autowired
     R2dbcEntityTemplate template;
+
+    private static SecurityMockServerConfigurers.JwtMutator readJwt() {
+        return mockJwt().authorities(new SimpleGrantedAuthority("SCOPE_payment:read"));
+    }
+
+    private static SecurityMockServerConfigurers.JwtMutator writeJwt() {
+        return mockJwt().authorities(new SimpleGrantedAuthority("SCOPE_payment:write"));
+    }
 
     @BeforeEach
     void resetAccount() {
@@ -36,8 +60,67 @@ class AccountsControllerIntegrationTest {
     }
 
     @Test
-    void getBalance_returnsSeededBalance() {
+    void createAccount_withWriteScope_returns201WithGeneratedIdAndDefaultBalance() {
+        webTestClient.mutateWith(writeJwt())
+                .post().uri("/accounts")
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.accountId").isNumber()
+                .jsonPath("$.balance").isEqualTo(10000);
+    }
+
+    @Test
+    void createAccount_withoutToken_returns401() {
+        webTestClient.post().uri("/accounts")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void createAccount_withReadScopeOnly_returns403() {
+        webTestClient.mutateWith(readJwt())
+                .post().uri("/accounts")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void getBalance_withoutToken_returns401() {
         webTestClient.get().uri("/accounts/1/balance")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void makePayment_withoutToken_returns401() {
+        webTestClient.post().uri("/accounts/1/payment")
+                .bodyValue(new PaymentRequest(500L))
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void getBalance_withWriteScopeOnly_returns403() {
+        webTestClient.mutateWith(writeJwt())
+                .get().uri("/accounts/1/balance")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void makePayment_withReadScopeOnly_returns403() {
+        webTestClient.mutateWith(readJwt())
+                .post().uri("/accounts/1/payment")
+                .bodyValue(new PaymentRequest(500L))
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void getBalance_returnsSeededBalance() {
+        webTestClient.mutateWith(readJwt())
+                .get().uri("/accounts/1/balance")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
@@ -46,7 +129,8 @@ class AccountsControllerIntegrationTest {
 
     @Test
     void getBalance_whenAccountMissing_returns404() {
-        webTestClient.get().uri("/accounts/999/balance")
+        webTestClient.mutateWith(readJwt())
+                .get().uri("/accounts/999/balance")
                 .exchange()
                 .expectStatus().isNotFound()
                 .expectBody()
@@ -56,7 +140,8 @@ class AccountsControllerIntegrationTest {
 
     @Test
     void makePayment_whenEnough_deductsAndReturnsNewBalance() {
-        webTestClient.post().uri("/accounts/1/payment")
+        webTestClient.mutateWith(writeJwt())
+                .post().uri("/accounts/1/payment")
                 .bodyValue(new PaymentRequest(500L))
                 .exchange()
                 .expectStatus().isOk()
@@ -66,7 +151,8 @@ class AccountsControllerIntegrationTest {
 
     @Test
     void makePayment_whenNotEnough_returns422() {
-        webTestClient.post().uri("/accounts/1/payment")
+        webTestClient.mutateWith(writeJwt())
+                .post().uri("/accounts/1/payment")
                 .bodyValue(new PaymentRequest(200000L))
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT)
@@ -77,7 +163,8 @@ class AccountsControllerIntegrationTest {
 
     @Test
     void makePayment_whenAccountMissing_returns404() {
-        webTestClient.post().uri("/accounts/999/payment")
+        webTestClient.mutateWith(writeJwt())
+                .post().uri("/accounts/999/payment")
                 .bodyValue(new PaymentRequest(500L))
                 .exchange()
                 .expectStatus().isNotFound();
@@ -85,7 +172,8 @@ class AccountsControllerIntegrationTest {
 
     @Test
     void makePayment_whenAmountNotPositive_returns400() {
-        webTestClient.post().uri("/accounts/1/payment")
+        webTestClient.mutateWith(writeJwt())
+                .post().uri("/accounts/1/payment")
                 .bodyValue(new PaymentRequest(0L))
                 .exchange()
                 .expectStatus().isBadRequest();

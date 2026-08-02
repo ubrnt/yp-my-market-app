@@ -45,9 +45,9 @@ class ItemServiceUnitTest {
     @Test
     void getItem_returnsDtoWithCartCountAndImgPath() {
         when(itemProvider.get(1L)).thenReturn(Mono.just(item(1L, "Мяч", 990L)));
-        when(itemRepository.countInCart(1L)).thenReturn(Mono.just(2));
+        when(itemRepository.countInCart(1L, 1L)).thenReturn(Mono.just(2));
 
-        StepVerifier.create(itemService.getItem(1L))
+        StepVerifier.create(itemService.getItem(1L, 1L))
                 .assertNext(dto -> {
                     assertEquals(1L, dto.id());
                     assertEquals("Мяч", dto.title());
@@ -61,9 +61,9 @@ class ItemServiceUnitTest {
     @Test
     void getItem_whenNotInCart_countIsZero() {
         when(itemProvider.get(1L)).thenReturn(Mono.just(item(1L, "Мяч", 990L)));
-        when(itemRepository.countInCart(1L)).thenReturn(Mono.empty());
+        when(itemRepository.countInCart(1L, 1L)).thenReturn(Mono.empty());
 
-        StepVerifier.create(itemService.getItem(1L))
+        StepVerifier.create(itemService.getItem(1L, 1L))
                 .assertNext(dto -> assertEquals(0, dto.count()))
                 .verifyComplete();
     }
@@ -72,7 +72,7 @@ class ItemServiceUnitTest {
     void getItem_whenNotFound_throws() {
         when(itemProvider.get(99L)).thenReturn(Mono.empty());
 
-        StepVerifier.create(itemService.getItem(99L))
+        StepVerifier.create(itemService.getItem(99L, 1L))
                 .expectError(NotFoundException.class)
                 .verify();
     }
@@ -100,12 +100,12 @@ class ItemServiceUnitTest {
 
     @Test
     void getItems_groupsByRowSize_andPadsLastRow() {
-        when(itemRepository.findPageIdsWithCount(null, SortType.NO, 6, 0L))
+        when(itemRepository.findPageIdsWithCount(1L, null, SortType.NO, 6, 0L))
                 .thenReturn(Flux.just(countRow(1), countRow(2), countRow(3), countRow(4)));
         when(itemProvider.getAll(List.of(1L, 2L, 3L, 4L)))
                 .thenReturn(Flux.just(item(1), item(2), item(3), item(4)));
 
-        StepVerifier.create(itemService.getItems(null, SortType.NO, 1, 5))
+        StepVerifier.create(itemService.getItems(1L, null, SortType.NO, 1, 5))
                 .assertNext(page -> {
                     assertEquals(2, page.items().size());
                     assertEquals(3, page.items().get(0).size());
@@ -127,12 +127,12 @@ class ItemServiceUnitTest {
 
     @Test
     void paging_middlePage_hasPreviousAndNext() {
-        when(itemRepository.findPageIdsWithCount(null, SortType.NO, 3, 2L))
+        when(itemRepository.findPageIdsWithCount(1L, null, SortType.NO, 3, 2L))
                 .thenReturn(Flux.just(countRow(1), countRow(2), countRow(3)));
         when(itemProvider.getAll(List.of(1L, 2L)))
                 .thenReturn(Flux.just(item(1), item(2)));
 
-        StepVerifier.create(itemService.getItems(null, SortType.NO, 2, 2))
+        StepVerifier.create(itemService.getItems(1L, null, SortType.NO, 2, 2))
                 .assertNext(page -> {
                     long real = page.items().stream().flatMap(java.util.List::stream)
                             .filter(item -> !item.isDummy()).count();
@@ -144,19 +144,19 @@ class ItemServiceUnitTest {
                 })
                 .verifyComplete();
 
-        verify(itemRepository).findPageIdsWithCount(null, SortType.NO, 3, 2L);
+        verify(itemRepository).findPageIdsWithCount(1L, null, SortType.NO, 3, 2L);
     }
 
     @Test
     void getItems_forwardsSearchAndSort() {
-        when(itemRepository.findPageIdsWithCount("мяч", SortType.PRICE, 6, 0L)).thenReturn(Flux.empty());
+        when(itemRepository.findPageIdsWithCount(1L, "мяч", SortType.PRICE, 6, 0L)).thenReturn(Flux.empty());
         when(itemProvider.getAll(List.of())).thenReturn(Flux.empty());
 
-        StepVerifier.create(itemService.getItems("мяч", SortType.PRICE, 1, 5))
+        StepVerifier.create(itemService.getItems(1L, "мяч", SortType.PRICE, 1, 5))
                 .assertNext(page -> assertTrue(page.items().isEmpty()))
                 .verifyComplete();
 
-        verify(itemRepository).findPageIdsWithCount("мяч", SortType.PRICE, 6, 0L);
+        verify(itemRepository).findPageIdsWithCount(1L, "мяч", SortType.PRICE, 6, 0L);
     }
 
     private static ItemCountRow countRow(long id) {

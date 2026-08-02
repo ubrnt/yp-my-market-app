@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <title>Регистрация</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+</head>
+
+<body class="bg-light">
+    <div class="container p-2">
+        <div class="row p-2">
+            <div class="col">
+                <div class="hstack gap-3">
+                    <h2>
+                        <a href="/" class="badge text-bg-success text-decoration-none">Витрина магазина</a>
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="row p-2 justify-content-center">
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Регистрация</h5>
+                        <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+                        <form th:action="@{/register}" method="post">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Логин</label>
+                                <input type="text" class="form-control" id="username" name="username"
+                                       th:value="${username}" required autofocus/>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Пароль</label>
+                                <input type="password" class="form-control" id="password" name="password" required/>
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">Повторите пароль</label>
+                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required/>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 bi bi-person-plus"> Зарегистрироваться</button>
+                        </form>
+                        <div class="mt-3 text-center">
+                            <a href="/login">Войти</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

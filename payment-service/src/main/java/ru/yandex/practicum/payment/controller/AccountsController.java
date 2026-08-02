@@ -1,11 +1,13 @@
 package ru.yandex.practicum.payment.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.payment.api.AccountsApi;
 import ru.yandex.practicum.payment.dto.BalanceResponse;
+import ru.yandex.practicum.payment.dto.CreateAccountResponse;
 import ru.yandex.practicum.payment.dto.PaymentRequest;
 import ru.yandex.practicum.payment.dto.PaymentResponse;
 import ru.yandex.practicum.payment.exception.AccountNotFoundException;
@@ -19,6 +21,13 @@ public class AccountsController implements AccountsApi {
 
     public AccountsController(PaymentService paymentService) {
         this.paymentService = paymentService;
+    }
+
+    @Override
+    public Mono<ResponseEntity<CreateAccountResponse>> createAccount(ServerWebExchange exchange) {
+        return paymentService.createAccount()
+                .map(account -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(new CreateAccountResponse(account.getId(), account.getBalance())));
     }
 
     @Override

@@ -27,7 +27,7 @@ class CartItemRepositoryTest extends AbstractRepositoryTest {
         Item item = saveItem("Мяч", "круглый", 990L, "ball.png");
         saveCartItem(item.getId(), 3);
 
-        StepVerifier.create(cartItemRepository.findAllWithItems())
+        StepVerifier.create(cartItemRepository.findAllWithItems(testUserId))
                 .assertNext(row -> {
                     assertEquals(item.getId(), row.id());
                     assertEquals("Мяч", row.title());

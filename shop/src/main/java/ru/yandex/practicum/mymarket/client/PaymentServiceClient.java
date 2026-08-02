@@ -1,6 +1,7 @@
 package ru.yandex.practicum.mymarket.client;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -13,15 +14,15 @@ import ru.yandex.practicum.mymarket.payment.dto.PaymentRequest;
 @Component
 public class PaymentServiceClient {
 
-    private final DefaultApi paymentApi;
-    private final long accountId;
+    private static final Logger log = LoggerFactory.getLogger(PaymentServiceClient.class);
 
-    public PaymentServiceClient(DefaultApi paymentApi, @Value("${app.payment.account-id}") long accountId) {
+    private final DefaultApi paymentApi;
+
+    public PaymentServiceClient(DefaultApi paymentApi) {
         this.paymentApi = paymentApi;
-        this.accountId = accountId;
     }
 
-    public Mono<BalanceResult> getBalance() {
+    public Mono<BalanceResult> getBalance(long accountId) {
         return paymentApi.getBalance(accountId)
                 .map(response -> BalanceResult.available(response.getBalance()))
                 .onErrorResume(WebClientResponseException.class, e -> Mono.just(
@@ -31,7 +32,20 @@ public class PaymentServiceClient {
                 .onErrorReturn(BalanceResult.unavailable());
     }
 
-    public Mono<PaymentResult> pay(long amount) {
+    public Mono<CreateAccountResult> createAccount() {
+        return paymentApi.createAccount()
+                .map(response -> CreateAccountResult.created(response.getAccountId()))
+                .onErrorResume(WebClientResponseException.class, e -> {
+                    log.error("payment-service rejected account creation: {}", e.getStatusCode());
+                    return Mono.just(CreateAccountResult.unavailable());
+                })
+                .onErrorResume(e -> {
+                    log.warn("payment-service is unreachable, account not created", e);
+                    return Mono.just(CreateAccountResult.unavailable());
+                });
+    }
+
+    public Mono<PaymentResult> pay(long accountId, long amount) {
         return paymentApi.makePayment(accountId, new PaymentRequest().amount(amount))
                 .thenReturn(PaymentResult.SUCCESS)
                 .onErrorResume(WebClientResponseException.class, e -> {
@@ -45,6 +59,22 @@ public class PaymentServiceClient {
                     return Mono.just(PaymentResult.UNAVAILABLE);
                 })
                 .onErrorReturn(PaymentResult.UNAVAILABLE);
+    }
+
+    public record CreateAccountResult(Status status, Long accountId) {
+
+        public enum Status {
+            CREATED,
+            UNAVAILABLE
+        }
+
+        public static CreateAccountResult created(Long accountId) {
+            return new CreateAccountResult(Status.CREATED, accountId);
+        }
+
+        public static CreateAccountResult unavailable() {
+            return new CreateAccountResult(Status.UNAVAILABLE, null);
+        }
     }
 
     public enum PaymentResult {

@@ -1,9 +1,18 @@
 \server:
   port: 8081
 
+app:
+  account:
+    default-balance: 10000
+
 spring:
   application:
     name: payment-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/my-market}
   r2dbc:
     url: r2dbc:h2:mem:///payments-db?options=MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
     username: sa

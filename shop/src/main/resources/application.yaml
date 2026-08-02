@@ -9,7 +9,6 @@ app:
     classpath-dir: images/
   payment:
     base-url: http://localhost:8081
-    account-id: 1
   cache:
     items:
       ttl: 120s
@@ -17,6 +16,19 @@ app:
 spring:
   application:
     name: my-market-app
+  security:
+    oauth2:
+      client:
+        registration:
+          payment:
+            provider: keycloak
+            client-id: shop-client
+            client-secret: ${SHOP_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: payment:read, payment:write
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8180/realms/my-market/protocol/openid-connect/token}
   r2dbc:
     url: r2dbc:h2:mem:///testdb?options=MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
     username: sa

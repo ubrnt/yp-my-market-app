@@ -40,23 +40,23 @@ public class OrderService {
         this.transactionalOperator = transactionalOperator;
     }
 
-    public Flux<OrderDto> getOrders() {
-        return orderRepository.findAllWithItems()
+    public Flux<OrderDto> getOrders(Long userId) {
+        return orderRepository.findAllWithItems(userId)
                 .collectList()
                 .map(orderMapper::toDtoList)
                 .flatMapMany(Flux::fromIterable);
     }
 
-    public Mono<OrderDto> getOrder(Long id) {
-        return orderRepository.findByIdWithItems(id)
+    public Mono<OrderDto> getOrder(Long id, Long userId) {
+        return orderRepository.findByIdWithItems(id, userId)
                 .collectList()
                 .flatMap(rows -> rows.isEmpty()
                         ? Mono.error(new NotFoundException(NotFoundException.Resource.ORDER, id))
                         : Mono.just(orderMapper.toDto(rows)));
     }
 
-    public Mono<Long> buy() {
-        return cartItemRepository.findAllWithItems()
+    public Mono<Long> buy(Long userId, Long accountId) {
+        return cartItemRepository.findAllWithItems(userId)
                 .collectList()
                 .flatMap(rows -> {
                     if (rows.isEmpty()) {
@@ -65,19 +65,20 @@ public class OrderService {
 
                     long totalSum = rows.stream().mapToLong(row -> row.price() * row.count()).sum();
 
-                    return paymentServiceClient.pay(totalSum).flatMap(result -> result == PaymentResult.SUCCESS
-                            ? placeOrder(rows, totalSum)
+                    return paymentServiceClient.pay(accountId, totalSum).flatMap(result -> result == PaymentResult.SUCCESS
+                            ? placeOrder(userId, rows, totalSum)
                             : Mono.empty());
                 });
     }
 
-    private Mono<Long> placeOrder(List<ItemDetailedRow> rows, long totalSum) {
+    private Mono<Long> placeOrder(Long userId, List<ItemDetailedRow> rows, long totalSum) {
         Order order = new Order();
+        order.setUserId(userId);
         order.setTotalSum(totalSum);
 
         return orderRepository.save(order)
                 .flatMap(saved -> orderItemRepository.saveAll(orderMapper.toOrderItems(saved.getId(), rows))
-                        .then(cartItemRepository.deleteAll())
+                        .then(cartItemRepository.deleteByUserId(userId))
                         .thenReturn(saved.getId()))
                 .as(transactionalOperator::transactional);
     }

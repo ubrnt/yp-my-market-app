@@ -25,7 +25,7 @@ class OrderRepositoryTest extends AbstractRepositoryTest {
         Order order = saveOrder(1980L);
         saveOrderItem(order.getId(), item.getId(), 2);
 
-        StepVerifier.create(orderRepository.findAllWithItems())
+        StepVerifier.create(orderRepository.findAllWithItems(testUserId))
                 .assertNext(row -> {
                     assertEquals(order.getId(), row.orderId());
                     assertEquals(1980L, row.totalSum());
@@ -47,7 +47,7 @@ class OrderRepositoryTest extends AbstractRepositoryTest {
         Order secondOrder = saveOrder(1980L);
         saveOrderItem(secondOrder.getId(), item.getId(), 2);
 
-        StepVerifier.create(orderRepository.findByIdWithItems(firstOrder.getId()))
+        StepVerifier.create(orderRepository.findByIdWithItems(firstOrder.getId(), testUserId))
                 .assertNext(row -> {
                     assertEquals(firstOrder.getId(), row.orderId());
                     assertEquals(item.getId(), row.itemId());

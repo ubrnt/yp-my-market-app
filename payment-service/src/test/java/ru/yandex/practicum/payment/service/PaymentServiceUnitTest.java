@@ -27,7 +27,19 @@ class PaymentServiceUnitTest {
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentService(accountRepository);
+        paymentService = new PaymentService(accountRepository, 10000L);
+    }
+
+    @Test
+    void createAccount_savesWithDefaultBalance() {
+        when(accountRepository.save(any(Account.class))).thenReturn(Mono.just(account(1000L, 10000L)));
+
+        StepVerifier.create(paymentService.createAccount())
+                .assertNext(account -> {
+                    assertEquals(1000L, account.getId());
+                    assertEquals(10000L, account.getBalance());
+                })
+                .verifyComplete();
     }
 
     @Test
