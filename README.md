@@ -34,14 +34,22 @@ The main app talks to the payment service over a REST api, caches the item catal
 ## Architecture
 
 ```mermaid
-flowchart LR
-    browser["Browser"] -->|"HTTP (form login, session)"| shop["shop :8080<br/>WebFlux + Thymeleaf"]
-    shop -->|R2DBC| shopdb[("H2 (users, items, cart, orders)")]
-    shop -->|"reactive Redis"| redis[("Redis<br/>item cache")]
-    shop -->|"client_credentials"| keycloak["Keycloak :8180<br/>realm my-market"]
-    shop -->|"REST / JSON + Bearer JWT<br/>(generated client)"| payment["payment-service :8081<br/>WebFlux REST"]
-    payment -.->|"JWKS (public keys)"| keycloak
-    payment -->|R2DBC| paydb[("H2 (accounts)")]
+flowchart TD
+    browser["Browser"] -->|"Authorization Code Flow"| front["front-service :8080"]
+    front -->|"REST + Bearer JWT"| gateway["gateway-service :8081"]
+    gateway -->|"/api/cash/**"| cash["cash-service :8084"]
+    gateway -->|"/api/transfers/**"| transfer["transfer-service :8085"]
+    gateway -->|"/api/customers/**"| accounts["accounts-service :8082"]
+    cash -->|"transactions"| accounts
+    transfer -->|"transactions"| accounts
+    cash -->|"events"| notifications["notifications-service :8083"]
+    transfer -->|"events"| notifications
+    accounts -->|"events"| notifications
+    notifications -->|"recipient lookup"| accounts
+    accounts --> db[("PostgreSQL<br/>schema per service")]
+    cash --> db
+    transfer --> db
+    notifications --> db
 ```
 
 | Module | Port | Responsibility |
