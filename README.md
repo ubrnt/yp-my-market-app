@@ -34,22 +34,18 @@ The main app talks to the payment service over a REST api, caches the item catal
 ## Architecture
 
 ```mermaid
-flowchart TD
+flowchart LR
     browser["Browser"] -->|"Authorization Code Flow"| front["front-service :8080"]
     front -->|"REST + Bearer JWT"| gateway["gateway-service :8081"]
+    gateway -->|"/api/customers/**"| accounts["accounts-service :8082"]
     gateway -->|"/api/cash/**"| cash["cash-service :8084"]
     gateway -->|"/api/transfers/**"| transfer["transfer-service :8085"]
-    gateway -->|"/api/customers/**"| accounts["accounts-service :8082"]
     cash -->|"transactions"| accounts
     transfer -->|"transactions"| accounts
     cash -->|"events"| notifications["notifications-service :8083"]
     transfer -->|"events"| notifications
     accounts -->|"events"| notifications
     notifications -->|"recipient lookup"| accounts
-    accounts --> db[("PostgreSQL<br/>schema per service")]
-    cash --> db
-    transfer --> db
-    notifications --> db
 ```
 
 | Module | Port | Responsibility |
